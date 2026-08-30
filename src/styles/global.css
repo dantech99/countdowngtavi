@@ -1,2 +1,48 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@theme {
+	/* The muted magenta GTA VI's key art leans on — same hue the trailer
+	   posters use, so the hero and the cards read as one palette. */
+	--color-gta-pink: #c9457f;
+	--color-gta-keyline: #17070f;
+}
+
+@layer components {
+	/* Rockstar's logotype look: a dark keyline hugging every glyph plus a hard
+	   offset shadow. Built from stacked text-shadows rather than
+	   -webkit-text-stroke, which needs `paint-order: stroke fill` to avoid
+	   eating into the letterforms. Offsets are in em so the outline keeps its
+	   weight across the hero's responsive type scale. Twelve offsets, not the
+	   usual four: at this stroke width the corners of a four-point ring show
+	   as notches. */
+	.gta-outline {
+		text-shadow:
+			-0.042em -0.042em 0 var(--color-gta-keyline),
+			0.042em -0.042em 0 var(--color-gta-keyline),
+			-0.042em 0.042em 0 var(--color-gta-keyline),
+			0.042em 0.042em 0 var(--color-gta-keyline),
+			-0.06em 0 0 var(--color-gta-keyline),
+			0.06em 0 0 var(--color-gta-keyline),
+			0 -0.06em 0 var(--color-gta-keyline),
+			0 0.06em 0 var(--color-gta-keyline),
+			-0.03em -0.055em 0 var(--color-gta-keyline),
+			0.03em -0.055em 0 var(--color-gta-keyline),
+			-0.03em 0.055em 0 var(--color-gta-keyline),
+			0.03em 0.055em 0 var(--color-gta-keyline),
+			0.07em 0.09em 0 var(--color-gta-pink),
+			0.1em 0.13em 0.18em rgb(0 0 0 / 0.5);
+	}
+
+	/* Same keyline at label scale, where the offset pink slab would smear the
+	   letterforms shut. */
+	.gta-outline-soft {
+		text-shadow:
+			0 0 0.25em var(--color-gta-keyline),
+			-0.06em -0.06em 0 var(--color-gta-keyline),
+			0.06em -0.06em 0 var(--color-gta-keyline),
+			-0.06em 0.06em 0 var(--color-gta-keyline),
+			0.06em 0.06em 0 var(--color-gta-keyline),
+			0.07em 0.09em 0 var(--color-gta-pink);
+	}
+}

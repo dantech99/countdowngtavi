@@ -5,8 +5,11 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import NewsCard from '../components/NewsCard.astro';
 import Donations from '../components/Donations.astro';
+import TrailerCard from '../components/TrailerCard.astro';
 import { fetchAggregated, mergeNews } from '../lib/news.js';
+import { getLatestTrailers, watchUrl } from '../lib/trailers.js';
 
+const trailers = getLatestTrailers(2);
 const aggregated = await fetchAggregated();
 const articulos = await getCollection('articulos');
 const merged = mergeNews(articulos, aggregated);
@@ -27,6 +30,21 @@ const preview = newestPropio
 
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
 	<Hero />
+
+	<section id="trailers" class="mx-auto max-w-5xl px-4 pt-20">
+		<h2 class="text-2xl font-black uppercase mb-8">Trailers</h2>
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			{trailers.map((trailer) => (
+				<TrailerCard
+					href={watchUrl(trailer.id)}
+					label={trailer.label}
+					title={trailer.title}
+					poster={trailer.poster}
+					uid={trailer.id}
+				/>
+			))}
+		</div>
+	</section>
 
 	<section id="news-preview" class="mx-auto max-w-5xl px-4 py-20">
 		<h2 class="text-2xl font-black uppercase mb-8">Últimas noticias</h2>
@@ -67,6 +85,17 @@ const preview = newestPropio
 	import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 	gsap.registerPlugin(ScrollTrigger);
+
+	gsap.from('#trailers', {
+		opacity: 0,
+		y: 32,
+		duration: 0.8,
+		ease: 'power2.out',
+		scrollTrigger: {
+			trigger: '#trailers',
+			start: 'top 80%',
+		},
+	});
 
 	gsap.from('#news-preview', {
 		opacity: 0,
