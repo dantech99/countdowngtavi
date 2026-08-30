@@ -20,6 +20,8 @@
 - Tailwind is installed via `pnpm astro add tailwind` (Vite plugin) — never the deprecated `@astrojs/tailwind` integration.
 - Content collection config lives at `src/content.config.ts` (Astro v6+ path), using the `glob()` loader from `astro/loaders` — not the old `src/content/config.ts`.
 - The site stays fully static — no Vercel adapter, no SSR, no serverless functions added for the cron.
+- The RSS feed list and the news merge logic live in exactly one place, `src/lib/news.js` (built in Task 8). Both `/noticias` and the homepage import from it; neither redefines them.
+- Tailwind v4 registers plugins from CSS (`@plugin "...";` in `src/styles/global.css`), never from a `tailwind.config.js`.
 
 ---
 
@@ -481,6 +483,8 @@ git commit -m "feat: rewrite base layout with SEO meta and global styles"
 
 - [ ] **Step 1: Build the markup — background image, countdown blocks, disclaimer, scroll indicator**
 
+Note on the overlay: it starts at `opacity-40` and the ScrollTrigger animates it to `0.85`, so the hero visibly darkens as you scroll — that progressive darkening is a spec requirement. Keep both values as written; animating opacity toward a value above 1 would be clamped by CSS and produce no visible effect.
+
 ```astro
 ---
 // src/components/Hero.astro
@@ -498,7 +502,7 @@ import heroBg from '../assets/background-gta6.png';
 		widths={[640, 1280, 1920, 3840]}
 		sizes="100vw"
 	/>
-	<div id="hero-overlay" class="absolute inset-0 bg-black/60"></div>
+	<div id="hero-overlay" class="absolute inset-0 bg-black opacity-40"></div>
 
 	<div class="relative z-10 flex flex-col items-center gap-6 px-4">
 		<h1 class="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-wide">
@@ -573,7 +577,7 @@ import heroBg from '../assets/background-gta6.png';
 	setInterval(render, 1000);
 
 	gsap.to('#hero-overlay', {
-		opacity: 1.25,
+		opacity: 0.85,
 		ease: 'none',
 		scrollTrigger: {
 			trigger: hero,
@@ -713,47 +717,116 @@ git commit -m "feat: add NewsCard component for own and aggregated news"
 ### Task 8: News listing page (`pages/noticias/index.astro`)
 
 **Files:**
+- Create: `src/lib/news.js`
+- Test: `src/lib/news.test.js`
 - Create: `src/pages/noticias/index.astro`
 
 **Interfaces:**
-- Consumes: `getCollection('articulos')` (Task 4); `fetchAllFeeds` from `src/lib/rss.js` (Task 3); `NewsCard` (Task 7); `Layout` (Task 5).
-- Produces: route `/noticias` listing both sources merged by date, with a "Ver más noticias" reveal button.
+- Consumes: `fetchAllFeeds` from `src/lib/rss.js` (Task 3); `getCollection('articulos')` (Task 4); `NewsCard` (Task 7); `Layout` (Task 5).
+- Produces:
+  - `FEEDS: Array<{ url: string, source: string }>` — the feed list.
+  - `fetchAggregated(feeds = FEEDS): Promise<Array<{title, link, pubDate, source}>>` — builds an `rss-parser` instance and delegates to `fetchAllFeeds`.
+  - `mergeNews(articulos, aggregated): Array<{ kind: 'propio', date: Date, entry } | { kind: 'agregado', date: Date, item }>` — pure, sorted newest-first, drops aggregated items with a null `pubDate`.
+  - route `/noticias` listing both sources merged by date, with a "Ver más noticias" reveal button.
+- Task 11 imports `fetchAggregated` and `mergeNews` from this same module — do not duplicate the feed list or the merge logic in the page.
 
-- [ ] **Step 1: Define the RSS feed list and build the page**
+- [ ] **Step 1: Write the failing tests for the shared news module**
 
-Note: the two feed URLs below are unverified examples, not confirmed working endpoints — the spec explicitly lists "URLs concretas de los feeds RSS" as pending. Before relying on this page, fetch each URL directly (`curl -I <url>`) and swap in real, reachable RSS feed URLs; Task 3's `fetchAllFeeds` already tolerates a feed being wrong or unreachable without failing the build, so this is safe to leave for a quick follow-up fix rather than blocking the task.
+```javascript
+// src/lib/news.test.js
+import { describe, it, expect } from 'vitest';
+import { mergeNews, FEEDS } from './news.js';
+
+const articulo = (title, pubDate) => ({ id: title, data: { title, pubDate: new Date(pubDate) } });
+const agregado = (title, pubDate) => ({ title, link: `https://x/${title}`, pubDate: pubDate ? new Date(pubDate) : null, source: 'IGN' });
+
+describe('FEEDS', () => {
+  it('lists feeds as url/source pairs', () => {
+    expect(FEEDS.length).toBeGreaterThan(0);
+    for (const feed of FEEDS) {
+      expect(typeof feed.url).toBe('string');
+      expect(typeof feed.source).toBe('string');
+    }
+  });
+});
+
+describe('mergeNews', () => {
+  it('merges both sources sorted newest first, tagging each entry', () => {
+    const result = mergeNews(
+      [articulo('propio-viejo', '2026-01-01'), articulo('propio-nuevo', '2026-03-01')],
+      [agregado('agregado-medio', '2026-02-01')]
+    );
+
+    expect(result.map((r) => r.kind)).toEqual(['propio', 'agregado', 'propio']);
+    expect(result[0].entry.data.title).toBe('propio-nuevo');
+    expect(result[1].item.title).toBe('agregado-medio');
+    expect(result[2].entry.data.title).toBe('propio-viejo');
+  });
+
+  it('drops aggregated items that have no date', () => {
+    const result = mergeNews([], [agregado('sin-fecha', null), agregado('con-fecha', '2026-02-01')]);
+    expect(result).toHaveLength(1);
+    expect(result[0].item.title).toBe('con-fecha');
+  });
+
+  it('returns an empty array when there is nothing to show', () => {
+    expect(mergeNews([], [])).toEqual([]);
+  });
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `pnpm test -- news`
+Expected: FAIL — `Cannot find module './news.js'`.
+
+- [ ] **Step 3: Implement the shared news module**
+
+Note: the two feed URLs below are unverified examples, not confirmed working endpoints — the spec explicitly lists "URLs concretas de los feeds RSS" as pending. Fetch each URL directly (`curl -I <url>`) and swap in real, reachable RSS feed URLs if they 404; Task 3's `fetchAllFeeds` already tolerates a feed being wrong or unreachable without failing the build, so a bad URL here is a follow-up fix, not a blocker. Report in your notes which URLs you verified and what they returned.
+
+```javascript
+// src/lib/news.js
+import Parser from 'rss-parser';
+import { fetchAllFeeds } from './rss.js';
+
+export const FEEDS = [
+  { url: 'https://www.rockstargames.com/newswire.rss', source: 'Rockstar Newswire' },
+  { url: 'https://www.ign.com/rss/articles/feed?tag=grand-theft-auto-6', source: 'IGN' },
+];
+
+export async function fetchAggregated(feeds = FEEDS) {
+  const parser = new Parser();
+  return fetchAllFeeds(feeds, parser.parseURL.bind(parser));
+}
+
+export function mergeNews(articulos, aggregated) {
+  return [
+    ...articulos.map((entry) => ({ kind: 'propio', date: entry.data.pubDate, entry })),
+    ...aggregated
+      .filter((item) => item.pubDate !== null)
+      .map((item) => ({ kind: 'agregado', date: item.pubDate, item })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `pnpm test -- news`
+Expected: PASS, 4 tests.
+
+- [ ] **Step 5: Build the listing page on top of the shared module**
 
 ```astro
 ---
 // src/pages/noticias/index.astro
-import Parser from 'rss-parser';
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import NewsCard from '../../components/NewsCard.astro';
-import { fetchAllFeeds } from '../../lib/rss.js';
+import { fetchAggregated, mergeNews } from '../../lib/news.js';
 
-const FEEDS = [
-	{ url: 'https://www.rockstargames.com/newswire.rss', source: 'Rockstar Newswire' },
-	{ url: 'https://www.ign.com/rss/articles/feed?tag=grand-theft-auto-6', source: 'IGN' },
-];
-
-const parser = new Parser();
-const aggregated = await fetchAllFeeds(FEEDS, parser.parseURL.bind(parser));
-
-const articulos = (await getCollection('articulos')).sort(
-	(a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
-);
-
-type FeedItem =
-	| { kind: 'propio'; date: Date; entry: (typeof articulos)[number] }
-	| { kind: 'agregado'; date: Date; item: (typeof aggregated)[number] };
-
-const merged: FeedItem[] = [
-	...articulos.map((entry) => ({ kind: 'propio' as const, date: entry.data.pubDate, entry })),
-	...aggregated
-		.filter((item) => item.pubDate !== null)
-		.map((item) => ({ kind: 'agregado' as const, date: item.pubDate as Date, item })),
-].sort((a, b) => b.date.getTime() - a.date.getTime());
+const aggregated = await fetchAggregated();
+const articulos = await getCollection('articulos');
+const merged = mergeNews(articulos, aggregated);
 
 const INITIAL_COUNT = 9;
 const visible = merged.slice(0, INITIAL_COUNT);
@@ -832,7 +905,7 @@ const rest = merged.slice(INITIAL_COUNT);
 </script>
 ```
 
-- [ ] **Step 2: Verify the build succeeds and the page renders**
+- [ ] **Step 6: Verify the build succeeds and the page renders**
 
 Run:
 ```bash
@@ -847,10 +920,10 @@ Checklist:
 - If there are more than 9 items total, "Ver más noticias" reveals the rest and then disappears.
 `astro dev stop` when done.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/pages/noticias/index.astro
+git add src/lib/news.js src/lib/news.test.js src/pages/noticias/index.astro
 git commit -m "feat: add merged news listing page"
 ```
 
@@ -860,12 +933,29 @@ git commit -m "feat: add merged news listing page"
 
 **Files:**
 - Create: `src/pages/noticias/[slug].astro`
+- Modify: `package.json` (add `@tailwindcss/typography`)
+- Modify: `src/styles/global.css` (register the typography plugin)
 
 **Interfaces:**
 - Consumes: `getCollection('articulos')`, `render()` from `astro:content` (Task 4); `Layout` (Task 5).
 - Produces: route `/noticias/[slug]` for each entry in the `articulos` collection.
 
-- [ ] **Step 1: Build the page with `getStaticPaths`**
+- [ ] **Step 1: Install and register the typography plugin**
+
+The article body below uses `prose prose-invert`, which come from `@tailwindcss/typography`. Without the plugin those classes are inert and the article body renders unstyled.
+
+Run:
+```bash
+pnpm add -D @tailwindcss/typography
+```
+
+Then add this line to `src/styles/global.css`, directly below the existing `@import "tailwindcss";` (Tailwind v4 registers plugins from CSS, not from a JS config file):
+
+```css
+@plugin "@tailwindcss/typography";
+```
+
+- [ ] **Step 2: Build the page with `getStaticPaths`**
 
 ```astro
 ---
@@ -900,19 +990,19 @@ const { Content } = await render(entry);
 </Layout>
 ```
 
-- [ ] **Step 2: Verify the build generates the static page**
+- [ ] **Step 3: Verify the build generates the static page**
 
 Run: `pnpm build`
 Expected: `dist/noticias/bienvenida/index.html` exists.
 
 Run: `astro dev --background`, visit `http://localhost:4321/noticias/bienvenida`.
-Checklist: title, author, date, cover image, and body content render correctly.
+Checklist: title, author, date, cover image, and body content render correctly, and the body paragraphs pick up typography styling (readable line length and spacing, light text on the dark background) rather than browser defaults.
 `astro dev stop` when done.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add src/pages/noticias/\[slug\].astro
+git add package.json pnpm-lock.yaml src/styles/global.css src/pages/noticias/\[slug\].astro
 git commit -m "feat: add article detail page"
 ```
 
@@ -983,52 +1073,29 @@ git commit -m "feat: add Donations and Footer components"
 ### Task 11: Homepage assembly (`pages/index.astro`)
 
 **Files:**
-- Modify: `src/pages/index.astro`
-- Delete: `src/components/Welcome.astro` (already removed from the working tree per `git status`; this step just confirms it's not reintroduced and removes the stray reference from `index.astro`)
+- Modify: `src/pages/index.astro` — it currently holds a standalone placeholder page (committed during setup so the build stayed green while `Layout.astro` gained required props). Replace its entire contents with the assembly below.
 
 **Interfaces:**
-- Consumes: `Layout` (Task 5), `Hero` (Task 6), `NewsCard` (Task 7), `Donations` and `Footer` (Task 10), `getCollection`/`fetchAllFeeds` (same merge logic as Task 8, limited to a 3-item preview).
+- Consumes: `Layout` (Task 5), `Hero` (Task 6), `NewsCard` (Task 7), `Donations` and `Footer` (Task 10), and `fetchAggregated`/`mergeNews` from `src/lib/news.js` (Task 8) plus `getCollection('articulos')` (Task 4).
 
 - [ ] **Step 1: Replace the stock homepage with the real assembly**
 
-Note: reuse whatever `FEEDS` URLs ended up verified and working in Task 8 — keep both lists in sync (or extract `FEEDS` to a shared `src/lib/feeds.js` if they drift, but don't do that speculatively before they actually drift).
+Note: the feed list and the merge logic live in `src/lib/news.js` (built in Task 8). Import them — do not redefine `FEEDS` or re-derive the merge here. The homepage differs from `/noticias` only in slicing the merged list down to a 3-item preview.
 
 ```astro
 ---
 // src/pages/index.astro
-import Parser from 'rss-parser';
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import NewsCard from '../components/NewsCard.astro';
 import Donations from '../components/Donations.astro';
 import Footer from '../components/Footer.astro';
-import { fetchAllFeeds } from '../lib/rss.js';
+import { fetchAggregated, mergeNews } from '../lib/news.js';
 
-const FEEDS = [
-	{ url: 'https://www.rockstargames.com/newswire.rss', source: 'Rockstar Newswire' },
-	{ url: 'https://www.ign.com/rss/articles/feed?tag=grand-theft-auto-6', source: 'IGN' },
-];
-
-const parser = new Parser();
-const aggregated = await fetchAllFeeds(FEEDS, parser.parseURL.bind(parser));
-
-const articulos = (await getCollection('articulos')).sort(
-	(a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
-);
-
-type FeedItem =
-	| { kind: 'propio'; date: Date; entry: (typeof articulos)[number] }
-	| { kind: 'agregado'; date: Date; item: (typeof aggregated)[number] };
-
-const preview: FeedItem[] = [
-	...articulos.map((entry) => ({ kind: 'propio' as const, date: entry.data.pubDate, entry })),
-	...aggregated
-		.filter((item) => item.pubDate !== null)
-		.map((item) => ({ kind: 'agregado' as const, date: item.pubDate as Date, item })),
-]
-	.sort((a, b) => b.date.getTime() - a.date.getTime())
-	.slice(0, 3);
+const aggregated = await fetchAggregated();
+const articulos = await getCollection('articulos');
+const preview = mergeNews(articulos, aggregated).slice(0, 3);
 ---
 
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
@@ -1087,14 +1154,14 @@ const preview: FeedItem[] = [
 </script>
 ```
 
-- [ ] **Step 2: Confirm the stock Welcome component is gone**
+- [ ] **Step 2: Confirm no placeholder scaffolding survives**
 
 Run:
 ```bash
-ls src/components/Welcome.astro 2>&1 || echo "confirmed removed"
-grep -r "Welcome" src/ || echo "no references left"
+grep -rn "Welcome" src/ || echo "no Welcome references left"
+grep -n "Placeholder homepage" src/pages/index.astro || echo "placeholder header gone"
 ```
-Expected: both commands report absence — `git status` at the start of this project already shows `Welcome.astro` as deleted; this step only guards against `index.astro` still importing it.
+Expected: both report absence. `src/components/Welcome.astro` was deleted during setup (commit `dee2163`); this step guards against the stock component or the setup placeholder comment surviving into the final homepage.
 
 - [ ] **Step 3: Manual verification of the full homepage**
 
