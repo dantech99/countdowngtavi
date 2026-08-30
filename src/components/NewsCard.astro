@@ -24,9 +24,14 @@ type Props = PropioProps | AgregadoProps;
 
 const props = Astro.props;
 
-function formatDate(date: Date | null) {
+function formatDate(date: Date | null, dateOnly = false) {
 	if (!date) return '';
-	return date.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
+	return date.toLocaleDateString('es', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		...(dateOnly ? { timeZone: 'UTC' } : {}),
+	});
 }
 ---
 
@@ -35,7 +40,7 @@ function formatDate(date: Date | null) {
 		<a href={props.href} class="block rounded-lg bg-white/5 overflow-hidden hover:bg-white/10 transition-colors">
 			<Image src={props.coverSrc} alt={props.coverAlt} class="h-40 w-full object-cover" widths={[400, 800]} sizes="(min-width: 768px) 400px, 100vw" />
 			<div class="p-4">
-				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate)}</p>
+				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate, true)}</p>
 				<h3 class="mt-1 text-lg font-bold">{props.title}</h3>
 				<p class="mt-2 text-sm text-white/70">{props.description}</p>
 			</div>
