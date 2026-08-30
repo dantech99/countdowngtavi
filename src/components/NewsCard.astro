@@ -1,0 +1,49 @@
+---
+// src/components/NewsCard.astro
+import { Image } from 'astro:assets';
+
+interface PropioProps {
+	variant: 'propio';
+	title: string;
+	description: string;
+	href: string;
+	coverSrc: ImageMetadata;
+	coverAlt: string;
+	pubDate: Date;
+}
+
+interface AgregadoProps {
+	variant: 'agregado';
+	title: string;
+	href: string;
+	source: string;
+	pubDate: Date | null;
+}
+
+type Props = PropioProps | AgregadoProps;
+
+const props = Astro.props;
+
+function formatDate(date: Date | null) {
+	if (!date) return '';
+	return date.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+---
+
+{
+	props.variant === 'propio' ? (
+		<a href={props.href} class="block rounded-lg bg-white/5 overflow-hidden hover:bg-white/10 transition-colors">
+			<Image src={props.coverSrc} alt={props.coverAlt} class="h-40 w-full object-cover" widths={[400, 800]} sizes="(min-width: 768px) 400px, 100vw" />
+			<div class="p-4">
+				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate)}</p>
+				<h3 class="mt-1 text-lg font-bold">{props.title}</h3>
+				<p class="mt-2 text-sm text-white/70">{props.description}</p>
+			</div>
+		</a>
+	) : (
+		<a href={props.href} target="_blank" rel="noopener noreferrer" class="block rounded-lg border border-white/10 p-4 hover:bg-white/5 transition-colors">
+			<p class="text-xs uppercase tracking-wide text-white/50">{props.source} · {formatDate(props.pubDate)}</p>
+			<h3 class="mt-1 text-base font-semibold">{props.title}</h3>
+		</a>
+	)
+}
