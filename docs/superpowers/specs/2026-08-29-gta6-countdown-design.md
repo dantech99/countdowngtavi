@@ -100,8 +100,9 @@ src/
 
 ## Rebuild automático
 
-- Sitio estático puro — sin SSR ni servidor corriendo.
-- `vercel.json` define un Cron Job cada 6 horas que golpea un Vercel Deploy Hook (URL secreta, fuera del repo, como variable configurada en Vercel) para disparar un nuevo build y así refrescar las noticias agregadas.
+- Sitio estático puro — sin SSR ni servidor corriendo, sin adapter de Vercel.
+- **Corrección tras verificar en docs de Vercel:** los Cron Jobs de `vercel.json` solo pueden apuntar a una ruta dentro del propio proyecto (una función serverless) — no pueden golpear una URL externa como un Deploy Hook directamente. Usar Vercel Cron para esto obligaría a agregar una función serverless solo para este propósito, lo cual contradice "sitio estático puro".
+- En su lugar: un workflow de **GitHub Actions** con trigger `schedule` (cron cada 6h) hace un `curl -X POST` al Vercel Deploy Hook (URL guardada como GitHub Secret, nunca en el repo). Vercel sigue siendo el hosting; el disparador del rebuild vive en GitHub Actions.
 
 ## Donaciones
 
