@@ -25,3 +25,4 @@ pnpm-debug.log*
 
 # superpowers SDD scratch workspace
 .superpowers/
+.atl
