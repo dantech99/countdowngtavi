@@ -1140,7 +1140,7 @@ const preview = mergeNews(articulos, aggregated).slice(0, 3);
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
 	<Hero />
 
-	<section id="news-preview" class="mx-auto max-w-5xl px-4 py-20 opacity-0 translate-y-8">
+	<section id="news-preview" class="mx-auto max-w-5xl px-4 py-20">
 		<h2 class="text-2xl font-black uppercase mb-8">Últimas noticias</h2>
 		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 			{preview.map((entry) =>
@@ -1180,9 +1180,12 @@ const preview = mergeNews(articulos, aggregated).slice(0, 3);
 
 	gsap.registerPlugin(ScrollTrigger);
 
-	gsap.to('#news-preview', {
-		opacity: 1,
-		y: 0,
+	// `from`, not `to`: the section ships visible and GSAP sets the hidden start
+	// state itself. Baking `opacity-0` into the markup would leave the news
+	// preview permanently invisible whenever JS is blocked or GSAP fails to load.
+	gsap.from('#news-preview', {
+		opacity: 0,
+		y: 32,
 		duration: 0.8,
 		ease: 'power2.out',
 		scrollTrigger: {
