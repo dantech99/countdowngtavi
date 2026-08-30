@@ -360,9 +360,12 @@ git commit -m "feat: add RSS fetch and normalization logic"
 
 - [ ] **Step 1: Define the collection with the glob loader**
 
+Import `z` from `astro/zod`, not from `astro:content`. The `astro:content` re-export is deprecated and makes `astro check` emit a `ts(6385): 'z' is deprecated` warning for every schema field that uses it.
+
 ```typescript
 // src/content.config.ts
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 
 const articulos = defineCollection({
