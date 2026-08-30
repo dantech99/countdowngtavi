@@ -13,10 +13,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.9",
     "gsap": "^3.15.0",
     "rss-parser": "^3.13.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
@@ -24,8 +26,6 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@tailwindcss/typography": "^0.5.20",
-    "sharp": "^0.35.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   }
