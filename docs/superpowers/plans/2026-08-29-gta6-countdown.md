@@ -725,7 +725,8 @@ git commit -m "feat: add NewsCard component for own and aggregated news"
 - Consumes: `fetchAllFeeds` from `src/lib/rss.js` (Task 3); `getCollection('articulos')` (Task 4); `NewsCard` (Task 7); `Layout` (Task 5).
 - Produces:
   - `FEEDS: Array<{ url: string, source: string }>` — the feed list.
-  - `fetchAggregated(feeds = FEEDS): Promise<Array<{title, link, pubDate, source}>>` — builds an `rss-parser` instance and delegates to `fetchAllFeeds`.
+  - `isGtaNews(item: { title?: string }): boolean` — pure keyword test used to keep only GTA-related headlines.
+  - `fetchAggregated(feeds = FEEDS): Promise<Array<{title, link, pubDate, source}>>` — builds an `rss-parser` instance, delegates to `fetchAllFeeds`, and returns only items passing `isGtaNews`.
   - `mergeNews(articulos, aggregated): Array<{ kind: 'propio', date: Date, entry } | { kind: 'agregado', date: Date, item }>` — pure, sorted newest-first, drops aggregated items with a null `pubDate`.
   - route `/noticias` listing both sources merged by date, with a "Ver más noticias" reveal button.
 - Task 11 imports `fetchAggregated` and `mergeNews` from this same module — do not duplicate the feed list or the merge logic in the page.
@@ -735,10 +736,10 @@ git commit -m "feat: add NewsCard component for own and aggregated news"
 ```javascript
 // src/lib/news.test.js
 import { describe, it, expect } from 'vitest';
-import { mergeNews, FEEDS } from './news.js';
+import { mergeNews, isGtaNews, FEEDS } from './news.js';
 
 const articulo = (title, pubDate) => ({ id: title, data: { title, pubDate: new Date(pubDate) } });
-const agregado = (title, pubDate) => ({ title, link: `https://x/${title}`, pubDate: pubDate ? new Date(pubDate) : null, source: 'IGN' });
+const agregado = (title, pubDate) => ({ title, link: `https://x/${title}`, pubDate: pubDate ? new Date(pubDate) : null, source: 'GameSpot' });
 
 describe('FEEDS', () => {
   it('lists feeds as url/source pairs', () => {
@@ -747,6 +748,23 @@ describe('FEEDS', () => {
       expect(typeof feed.url).toBe('string');
       expect(typeof feed.source).toBe('string');
     }
+  });
+});
+
+describe('isGtaNews', () => {
+  it('keeps titles mentioning GTA or Grand Theft Auto, in any casing', () => {
+    expect(isGtaNews({ title: 'GTA 6 delayed again' })).toBe(true);
+    expect(isGtaNews({ title: 'Everything we know about Grand Theft Auto 6' })).toBe(true);
+    expect(isGtaNews({ title: 'rockstar confirms gta release window' })).toBe(true);
+  });
+
+  it('rejects unrelated gaming news', () => {
+    expect(isGtaNews({ title: 'Fable delayed to 2027' })).toBe(false);
+    expect(isGtaNews({ title: 'The best Steam Deck games' })).toBe(false);
+  });
+
+  it('rejects an item with no title instead of throwing', () => {
+    expect(isGtaNews({})).toBe(false);
   });
 });
 
@@ -782,7 +800,9 @@ Expected: FAIL — `Cannot find module './news.js'`.
 
 - [ ] **Step 3: Implement the shared news module**
 
-Note: the two feed URLs below are unverified examples, not confirmed working endpoints — the spec explicitly lists "URLs concretas de los feeds RSS" as pending. Fetch each URL directly (`curl -I <url>`) and swap in real, reachable RSS feed URLs if they 404; Task 3's `fetchAllFeeds` already tolerates a feed being wrong or unreachable without failing the build, so a bad URL here is a follow-up fix, not a blocker. Report in your notes which URLs you verified and what they returned.
+Note on the feed URLs: these three were verified reachable by the controller on 2026-08-29 (all HTTP 200, valid RSS). The two URLs originally drafted in the spec were dead — Rockstar's `newswire.rss` returns 404 and IGN's tag feed returns 403 — so they were replaced. Do not silently swap these for others.
+
+Note on the filter: these are general gaming feeds, not GTA-specific ones, so `fetchAggregated` filters by keyword. Without it a GTA 6 countdown site would list unrelated game news. At verification time GameSpot carried 19 GTA items out of 30 and Eurogamer 23 out of 100, so the filter has real material to work with.
 
 ```javascript
 // src/lib/news.js
@@ -790,13 +810,21 @@ import Parser from 'rss-parser';
 import { fetchAllFeeds } from './rss.js';
 
 export const FEEDS = [
-  { url: 'https://www.rockstargames.com/newswire.rss', source: 'Rockstar Newswire' },
-  { url: 'https://www.ign.com/rss/articles/feed?tag=grand-theft-auto-6', source: 'IGN' },
+  { url: 'https://www.gamespot.com/feeds/news', source: 'GameSpot' },
+  { url: 'https://www.eurogamer.net/feed', source: 'Eurogamer' },
+  { url: 'https://www.vg247.com/feed', source: 'VG247' },
 ];
+
+const GTA_PATTERN = /\b(gta|grand\s+theft\s+auto)\b/i;
+
+export function isGtaNews(item) {
+  return GTA_PATTERN.test(item.title ?? '');
+}
 
 export async function fetchAggregated(feeds = FEEDS) {
   const parser = new Parser();
-  return fetchAllFeeds(feeds, parser.parseURL.bind(parser));
+  const items = await fetchAllFeeds(feeds, parser.parseURL.bind(parser));
+  return items.filter(isGtaNews);
 }
 
 export function mergeNews(articulos, aggregated) {
@@ -812,7 +840,7 @@ export function mergeNews(articulos, aggregated) {
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test -- news`
-Expected: PASS, 4 tests.
+Expected: PASS, 7 tests (1 for `FEEDS`, 3 for `isGtaNews`, 3 for `mergeNews`).
 
 - [ ] **Step 5: Build the listing page on top of the shared module**
 
