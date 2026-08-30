@@ -9,7 +9,17 @@ import { fetchAggregated, mergeNews } from '../lib/news.js';
 
 const aggregated = await fetchAggregated();
 const articulos = await getCollection('articulos');
-const preview = mergeNews(articulos, aggregated).slice(0, 3);
+const merged = mergeNews(articulos, aggregated);
+
+// The team's own articles are the site's differentiator, so always reserve a
+// preview slot for the newest one instead of leaving it to open date
+// competition with high-volume aggregated feeds.
+const newestPropio = merged.find((entry) => entry.kind === 'propio');
+const preview = newestPropio
+	? [newestPropio, ...merged.filter((entry) => entry !== newestPropio).slice(0, 2)].sort(
+			(a, b) => b.date.getTime() - a.date.getTime()
+		)
+	: merged.slice(0, 3);
 ---
 
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
