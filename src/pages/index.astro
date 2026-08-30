@@ -11,15 +11,18 @@ const aggregated = await fetchAggregated();
 const articulos = await getCollection('articulos');
 const merged = mergeNews(articulos, aggregated);
 
+const PREVIEW_COUNT = 9;
+
 // The team's own articles are the site's differentiator, so always reserve a
 // preview slot for the newest one instead of leaving it to open date
 // competition with high-volume aggregated feeds.
 const newestPropio = merged.find((entry) => entry.kind === 'propio');
 const preview = newestPropio
-	? [newestPropio, ...merged.filter((entry) => entry !== newestPropio).slice(0, 2)].sort(
-			(a, b) => b.date.getTime() - a.date.getTime()
-		)
-	: merged.slice(0, 3);
+	? [
+			newestPropio,
+			...merged.filter((entry) => entry !== newestPropio).slice(0, PREVIEW_COUNT - 1),
+		].sort((a, b) => b.date.getTime() - a.date.getTime())
+	: merged.slice(0, PREVIEW_COUNT);
 ---
 
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
@@ -27,7 +30,7 @@ const preview = newestPropio
 
 	<section id="news-preview" class="mx-auto max-w-5xl px-4 py-20">
 		<h2 class="text-2xl font-black uppercase mb-8">Últimas noticias</h2>
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+		<div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:balance]">
 			{preview.map((entry) =>
 				entry.kind === 'propio' ? (
 					<NewsCard
@@ -46,11 +49,12 @@ const preview = newestPropio
 						href={entry.item.link}
 						source={entry.item.source}
 						pubDate={entry.item.pubDate}
+						image={entry.item.image}
 					/>
 				)
 			)}
 		</div>
-		<a href="/noticias" class="mt-8 mx-auto block w-fit rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
+		<a href="/noticias" class="mt-4 mx-auto block w-fit rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
 			Ver más noticias
 		</a>
 	</section>

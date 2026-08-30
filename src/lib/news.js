@@ -14,8 +14,19 @@ export function isGtaNews(item) {
   return GTA_PATTERN.test(item.title ?? '');
 }
 
+// media:* namespaces are where most gaming feeds publish their article
+// thumbnails, and rss-parser only surfaces them when asked explicitly.
+const PARSER_OPTIONS = {
+  customFields: {
+    item: [
+      ['media:content', 'media:content', { keepArray: true }],
+      ['media:thumbnail', 'media:thumbnail', { keepArray: true }],
+    ],
+  },
+};
+
 async function fetchAndFilter(feeds) {
-  const parser = new Parser();
+  const parser = new Parser(PARSER_OPTIONS);
   const items = await fetchAllFeeds(feeds, parser.parseURL.bind(parser));
   return items.filter(isGtaNews).filter((item) => item.link !== '');
 }

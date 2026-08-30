@@ -18,6 +18,7 @@ interface AgregadoProps {
 	href: string;
 	source: string;
 	pubDate: Date | null;
+	image?: string | null;
 }
 
 type Props = PropioProps | AgregadoProps;
@@ -33,22 +34,67 @@ function formatDate(date: Date | null, dateOnly = false) {
 		...(dateOnly ? { timeZone: 'UTC' } : {}),
 	});
 }
+
+// Feed thumbnails arrive without dimensions, so pick a ratio deterministically
+// from the article URL: the masonry gets its varied silhouette without the
+// layout shift that loading each remote image at its natural size would cause.
+const RATIOS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]', 'aspect-[16/9]'];
+
+function pickRatio(seed: string) {
+	let hash = 0;
+	for (let i = 0; i < seed.length; i += 1) {
+		hash = (hash * 31 + seed.charCodeAt(i)) % 997;
+	}
+	return RATIOS[hash % RATIOS.length];
+}
+
+const cardBase =
+	'group mb-4 block break-inside-avoid rounded-xl overflow-hidden ring-1 ring-white/10 transition-colors';
 ---
 
 {
 	props.variant === 'propio' ? (
-		<a href={props.href} class="block rounded-lg bg-white/5 overflow-hidden hover:bg-white/10 transition-colors">
-			<Image src={props.coverSrc} alt={props.coverAlt} class="h-40 w-full object-cover" widths={[400, 800]} sizes="(min-width: 768px) 400px, 100vw" />
+		<a href={props.href} class={`${cardBase} bg-white/5 hover:bg-white/10 hover:ring-white/25`}>
+			<div class="overflow-hidden">
+				<Image
+					src={props.coverSrc}
+					alt={props.coverAlt}
+					class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+					widths={[400, 800]}
+					sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, 100vw"
+				/>
+			</div>
 			<div class="p-4">
 				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate, true)}</p>
-				<h3 class="mt-1 text-lg font-bold">{props.title}</h3>
+				<h3 class="mt-1 text-lg font-bold leading-snug text-balance">{props.title}</h3>
 				<p class="mt-2 text-sm text-white/70">{props.description}</p>
 			</div>
 		</a>
 	) : (
-		<a href={props.href} target="_blank" rel="noopener noreferrer" class="block rounded-lg border border-white/10 p-4 hover:bg-white/5 transition-colors">
-			<p class="text-xs uppercase tracking-wide text-white/50">{props.source} · {formatDate(props.pubDate)}</p>
-			<h3 class="mt-1 text-base font-semibold">{props.title}</h3>
+		<a
+			href={props.href}
+			target="_blank"
+			rel="noopener noreferrer"
+			class={`${cardBase} bg-white/[0.03] hover:bg-white/[0.07] hover:ring-white/25`}
+		>
+			{props.image && (
+				<div class={`overflow-hidden ${pickRatio(props.href)}`}>
+					<img
+						src={props.image}
+						alt=""
+						loading="lazy"
+						decoding="async"
+						referrerpolicy="no-referrer"
+						class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+					/>
+				</div>
+			)}
+			<div class="p-4">
+				<p class="text-xs uppercase tracking-wide text-white/50">
+					{props.source} · {formatDate(props.pubDate)}
+				</p>
+				<h3 class="mt-1 text-base font-semibold leading-snug text-balance">{props.title}</h3>
+			</div>
 		</a>
 	)
 }

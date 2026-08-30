@@ -18,7 +18,7 @@ const rest = merged.slice(INITIAL_COUNT);
 	<main class="mx-auto max-w-5xl px-4 py-16">
 		<h1 class="text-3xl font-black uppercase mb-8">Noticias</h1>
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="news-grid">
+		<div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:balance]" id="news-grid">
 			{visible.map((entry) =>
 				entry.kind === 'propio' ? (
 					<NewsCard
@@ -37,6 +37,7 @@ const rest = merged.slice(INITIAL_COUNT);
 						href={entry.item.link}
 						source={entry.item.source}
 						pubDate={entry.item.pubDate}
+						image={entry.item.image}
 					/>
 				)
 			)}
@@ -44,7 +45,7 @@ const rest = merged.slice(INITIAL_COUNT);
 
 		{rest.length > 0 && (
 			<>
-				<div class="hidden grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4" id="news-grid-rest">
+				<div class="hidden columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:balance]" id="news-grid-rest">
 					{rest.map((entry) =>
 						entry.kind === 'propio' ? (
 							<NewsCard
@@ -63,11 +64,12 @@ const rest = merged.slice(INITIAL_COUNT);
 								href={entry.item.link}
 								source={entry.item.source}
 								pubDate={entry.item.pubDate}
+								image={entry.item.image}
 							/>
 						)
 					)}
 				</div>
-				<button id="load-more" class="mt-8 mx-auto block rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
+				<button id="load-more" class="mt-4 mx-auto block rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
 					Ver más noticias
 				</button>
 			</>
@@ -80,7 +82,6 @@ const rest = merged.slice(INITIAL_COUNT);
 	const rest = document.getElementById('news-grid-rest');
 	button?.addEventListener('click', () => {
 		rest?.classList.remove('hidden');
-		rest?.classList.add('grid');
 		button.remove();
 	});
 </script>
