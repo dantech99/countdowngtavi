@@ -6,9 +6,10 @@ import heroBg from '../assets/background-gta6.png';
 
 <section id="hero" class="relative h-screen w-full overflow-hidden flex items-center justify-center text-center">
 	<Image
+		id="hero-bg"
 		src={heroBg}
 		alt="Arte de fondo de GTA VI"
-		class="absolute inset-0 h-full w-full object-cover"
+		class="absolute -top-[10%] left-0 h-[115%] w-full object-cover will-change-transform sm:-top-[30%] sm:h-[140%]"
 		loading="eager"
 		fetchpriority="high"
 		widths={[640, 1280, 1920, 3840]}
@@ -16,7 +17,7 @@ import heroBg from '../assets/background-gta6.png';
 	/>
 	<div id="hero-overlay" class="absolute inset-0 bg-black opacity-40"></div>
 
-	<div class="relative z-10 flex flex-col items-center gap-6 px-4">
+	<div id="hero-content" class="relative z-10 flex flex-col items-center gap-6 px-4 will-change-transform">
 		<h1 class="gta-outline text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-wide">
 			Cuenta regresiva a GTA VI
 		</h1>
@@ -87,6 +88,46 @@ import heroBg from '../assets/background-gta6.png';
 
 	render();
 	setInterval(render, 1000);
+
+	// Parallax: the artwork drifts down as the page scrolls up, so it travels
+	// less than the viewport and reads as distant, while the copy travels
+	// faster than the page and fades out. Both are motion effects, so
+	// matchMedia keeps them off for anyone who asked for reduced motion —
+	// and reverts them cleanly if that preference changes mid-session.
+	const mm = gsap.matchMedia();
+
+	// The travel distance has to stay inside the slack the layer was given:
+	// the image starts at -10%/-30% of the hero and is 115%/140% tall, so
+	// drifting further than that would expose the top edge. On phones the
+	// layer is shorter, because a 140%-tall cover crop throws away most of
+	// the artwork's width.
+	function parallax(distance: string) {
+		gsap.to('#hero-bg', {
+			y: distance,
+			ease: 'none',
+			scrollTrigger: {
+				trigger: hero,
+				start: 'top top',
+				end: 'bottom top',
+				scrub: true,
+			},
+		});
+
+		gsap.to('#hero-content', {
+			y: -90,
+			opacity: 0,
+			ease: 'none',
+			scrollTrigger: {
+				trigger: hero,
+				start: 'top top',
+				end: '75% top',
+				scrub: true,
+			},
+		});
+	}
+
+	mm.add('(prefers-reduced-motion: no-preference) and (max-width: 639px)', () => parallax('8vh'));
+	mm.add('(prefers-reduced-motion: no-preference) and (min-width: 640px)', () => parallax('25vh'));
 
 	gsap.to('#hero-overlay', {
 		opacity: 0.85,
