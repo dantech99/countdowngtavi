@@ -1,3 +1,6 @@
+---
+
+---
 # GTA 6 Countdown — Diseño
 
 ## Contexto y objetivo
@@ -16,7 +19,7 @@ Landing page estática con contador regresivo al lanzamiento de GTA VI, sección
 - **Tailwind CSS v4**, instalado vía `npx astro add tailwind` (usa el plugin oficial de Vite; el integration `@astrojs/tailwind` está deprecado desde Tailwind v4).
 - **GSAP + ScrollTrigger**, como dependencia npm estándar, usada dentro de `<script>` tags en componentes Astro (no en el frontmatter, que corre en build-time sin DOM).
 - **Astro Content Collections** para los artículos propios, con el helper `image()` en el schema para validar y optimizar la imagen de portada.
-- **`rss-parser`** (o librería equivalente) para leer feeds RSS de medios de gaming/GTA en build-time.
+- `**rss-parser**` (o librería equivalente) para leer feeds RSS de medios de gaming/GTA en build-time.
 - **Ko-fi** embebido para donaciones puntuales.
 - **Vercel** como hosting, con un Cron Job (`vercel.json`) que dispara un Deploy Hook cada 6 horas para refrescar noticias.
 
@@ -24,8 +27,8 @@ Landing page estática con contador regresivo al lanzamiento de GTA VI, sección
 
 ```
 src/
+├── content.config.ts       # collection "articulos": loader glob(), schema: title, date, author, cover: image(), coverAlt
 ├── content/
-│   ├── config.ts          # schema: title, date, author, cover: image(), coverAlt, slug
 │   └── articulos/
 │       └── *.md (o .mdx)  # artículos propios, imágenes locales junto al archivo
 ├── components/
@@ -79,7 +82,7 @@ src/
 
 ### Artículos propios
 
-- Gestionados con Astro Content Collections (`src/content/articulos/`), archivos Markdown/MDX.
+- Gestionados con Astro Content Collections (`src/content.config.ts` + `src/content/articulos/`), usando el loader `glob()` de `astro/loaders` (requerido desde Astro v6 en adelante — verificado en docs oficiales).
 - Schema con `image()` para la portada — Astro la valida y optimiza vía `astro:assets`.
 - Imágenes dentro del cuerpo del artículo: sintaxis Markdown estándar (`![alt](./foto.png)`) con la imagen junto al archivo — Astro las optimiza automáticamente.
 - Este es el contenido que sostiene la aprobación de AdSense (contenido original con opinión/análisis propio).
@@ -115,3 +118,4 @@ src/
 - URLs concretas de los feeds RSS a incluir.
 - Copy y estrategia editorial de los primeros artículos propios.
 - Key art / assets de fondo para el Hero (verificar licencia de uso).
+
