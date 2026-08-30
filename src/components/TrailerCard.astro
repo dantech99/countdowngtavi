@@ -1,0 +1,45 @@
+---
+// src/components/TrailerCard.astro
+import TrailerPoster from './TrailerPoster.astro';
+
+interface Props {
+	href: string;
+	label: string;
+	title: string;
+	poster: 'sunset' | 'neon';
+	uid: string;
+}
+
+const { href, label, title, poster, uid } = Astro.props;
+---
+
+<a
+	href={href}
+	target="_blank"
+	rel="noopener noreferrer"
+	aria-label={`Ver ${title} en YouTube`}
+	class="group relative block aspect-[3/4] overflow-hidden rounded-2xl ring-1 ring-white/15 transition-shadow hover:ring-white/40 hover:shadow-[0_0_60px_-15px_rgba(255,110,170,0.6)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+>
+	<TrailerPoster
+		variant={poster}
+		uid={uid}
+		class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+	/>
+
+	<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/25"></div>
+
+	<div class="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
+		<span class="grid h-16 w-16 place-items-center rounded-full bg-white/95 shadow-lg transition-transform duration-300 group-hover:scale-110 sm:h-20 sm:w-20">
+			<svg viewBox="0 0 24 24" class="ml-1 h-7 w-7 fill-black sm:h-8 sm:w-8" aria-hidden="true">
+				<path d="M8 5.5v13l11-6.5z" />
+			</svg>
+		</span>
+	</div>
+
+	<div class="absolute inset-x-0 bottom-0 p-5 text-center sm:p-7">
+		<p class="text-xs font-bold uppercase tracking-[0.35em] text-white/80">Ver</p>
+		<p class="mt-1 text-2xl font-black uppercase tracking-tight text-[#ffe9a8] sm:text-4xl">
+			{label}
+		</p>
+	</div>
+</a>

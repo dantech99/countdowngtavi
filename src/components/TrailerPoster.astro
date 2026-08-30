@@ -1,0 +1,157 @@
+---
+// src/components/TrailerPoster.astro
+//
+// Original artwork, drawn as inline SVG: it evokes the Vice City sunset the
+// official key art is built on without borrowing any of Rockstar's assets, and
+// it costs no extra request or image decode.
+interface Props {
+	variant: 'sunset' | 'neon';
+	uid: string;
+	class?: string;
+}
+
+const { variant, uid, class: className } = Astro.props;
+
+const PALETTES = {
+	sunset: {
+		skyTop: '#241546',
+		skyMid: '#b83f7d',
+		skyLow: '#ff8a5c',
+		sunTop: '#ffe9a8',
+		sunLow: '#ff5f8f',
+		water: '#170e2e',
+		waterGlow: '#ff7aa2',
+		city: '#2b1a4a',
+		cityFar: '#4a2a63',
+		palm: '#150c28',
+	},
+	neon: {
+		skyTop: '#0d0724',
+		skyMid: '#5c2286',
+		skyLow: '#ff4d8d',
+		sunTop: '#8ef0ff',
+		sunLow: '#b64dff',
+		water: '#0a0620',
+		waterGlow: '#7a5cff',
+		city: '#1a0f38',
+		cityFar: '#331c56',
+		palm: '#0a0619',
+	},
+} as const;
+
+const c = PALETTES[variant];
+
+// Deterministic skyline: fixed silhouettes keep both posters stable between
+// builds instead of reshuffling on every render.
+const SKYLINES = {
+	sunset: [
+		[16, 196], [34, 168], [52, 208], [68, 150], [88, 182], [106, 212],
+		[128, 224], [148, 232], [172, 226], [192, 214], [212, 190], [232, 156],
+		[252, 202], [270, 174],
+	],
+	neon: [
+		[14, 172], [32, 202], [50, 140], [70, 186], [86, 206], [108, 222],
+		[130, 230], [150, 236], [170, 228], [190, 218], [212, 170], [230, 198],
+		[250, 152], [268, 188],
+	],
+} as const;
+
+const HORIZON = 250;
+const buildings = SKYLINES[variant];
+const fronds = [-158, -122, -86, -46, -8, 26];
+const palms = [
+	{ x: 30, y: 400, scale: 1.15, flip: false },
+	{ x: 272, y: 400, scale: 0.95, flip: true },
+];
+---
+
+<svg
+	class={className}
+	viewBox="0 0 300 400"
+	preserveAspectRatio="xMidYMid slice"
+	role="presentation"
+	aria-hidden="true"
+>
+	<defs>
+		<linearGradient id={`sky-${uid}`} x1="0" y1="0" x2="0" y2={HORIZON} gradientUnits="userSpaceOnUse">
+			<stop offset="0%" stop-color={c.skyTop} />
+			<stop offset="55%" stop-color={c.skyMid} />
+			<stop offset="100%" stop-color={c.skyLow} />
+		</linearGradient>
+		<linearGradient id={`sun-${uid}`} x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color={c.sunTop} />
+			<stop offset="100%" stop-color={c.sunLow} />
+		</linearGradient>
+		<linearGradient id={`water-${uid}`} x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color={c.waterGlow} stop-opacity="0.38" />
+			<stop offset="45%" stop-color={c.water} />
+			<stop offset="100%" stop-color={c.water} />
+		</linearGradient>
+		<radialGradient id={`halo-${uid}`} cx="0.5" cy="0.5" r="0.5">
+			<stop offset="0%" stop-color={c.sunTop} stop-opacity="0.45" />
+			<stop offset="100%" stop-color={c.sunTop} stop-opacity="0" />
+		</radialGradient>
+		<clipPath id={`above-${uid}`}>
+			<rect x="0" y="0" width="300" height={HORIZON} />
+		</clipPath>
+	</defs>
+
+	<rect width="300" height={HORIZON} fill={`url(#sky-${uid})`} />
+
+	<g clip-path={`url(#above-${uid})`}>
+		<circle cx="150" cy="246" r="140" fill={`url(#halo-${uid})`} />
+		<circle cx="150" cy="246" r="74" fill={`url(#sun-${uid})`} />
+		{[0, 1, 2, 3, 4].map((i) => (
+			<rect
+				x="60"
+				y={196 + i * 12}
+				width="180"
+				height={2 + i}
+				fill={c.skyMid}
+				opacity="0.55"
+			/>
+		))}
+	</g>
+
+	<g fill={c.cityFar} opacity="0.75">
+		{buildings.filter((_, i) => i % 2 === 1).map(([x, y]) => (
+			<rect x={x - 9} y={y - 14} width="18" height={HORIZON - y + 14} />
+		))}
+	</g>
+	<g fill={c.city}>
+		{buildings.filter((_, i) => i % 2 === 0).map(([x, y]) => (
+			<rect x={x - 11} y={y} width="22" height={HORIZON - y} />
+		))}
+	</g>
+
+	<rect x="0" y={HORIZON} width="300" height={400 - HORIZON} fill={`url(#water-${uid})`} />
+	{[0, 1, 2, 3, 4, 5, 6].map((i) => (
+		<rect
+			x={150 - (44 - i * 5)}
+			y={260 + i * 16}
+			width={(44 - i * 5) * 2}
+			height={3}
+			rx="1.5"
+			fill={c.sunTop}
+			opacity={0.5 - i * 0.06}
+		/>
+	))}
+
+	{palms.map(({ x, y, scale, flip }) => (
+		<g
+			transform={`translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})`}
+			fill={c.palm}
+		>
+			<path d="M0 0 C -4 -70, -10 -130, -26 -186 L -16 -190 C 2 -132, 8 -70, 10 0 Z" />
+			<g transform="translate(-21 -188)">
+				{fronds.map((angle) => (
+					<path
+						d="M0 0 C 22 -16, 58 -20, 84 -5 C 58 6, 24 10, 0 0 Z"
+						transform={`rotate(${angle})`}
+					/>
+				))}
+				<circle r="5" />
+			</g>
+		</g>
+	))}
+</svg>
