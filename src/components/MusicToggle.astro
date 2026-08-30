@@ -1,0 +1,100 @@
+---
+// src/components/MusicToggle.astro
+---
+
+<button
+	id="music-toggle"
+	type="button"
+	aria-pressed="false"
+	aria-label="Activar música ambiental"
+	title="Música ambiental"
+	class="group fixed bottom-5 right-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white/80 backdrop-blur transition-colors hover:border-gta-pink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:border-gta-pink aria-pressed:text-white"
+>
+	<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M11 5 6 9H3v6h3l5 4z" />
+		<path data-music-off d="m17 9 4 6m0-6-4 6" />
+		<g data-music-on class="hidden">
+			<path d="M15.5 8.5a5 5 0 0 1 0 7" />
+			<path d="M18.5 6a9 9 0 0 1 0 12" />
+		</g>
+	</svg>
+	<span class="sr-only" data-music-label>Música apagada</span>
+</button>
+
+<script>
+	import { createAmbientMusic } from '../lib/ambient-music.js';
+
+	const STORAGE_KEY = 'gta6:music';
+
+	const button = document.getElementById('music-toggle') as HTMLButtonElement | null;
+	if (button) {
+		const offIcon = button.querySelector('[data-music-off]') as SVGElement;
+		const onIcon = button.querySelector('[data-music-on]') as SVGElement;
+		const label = button.querySelector('[data-music-label]') as HTMLElement;
+
+		let music: ReturnType<typeof createAmbientMusic> | null = null;
+		let context: AudioContext | null = null;
+
+		function render(playing: boolean) {
+			button!.setAttribute('aria-pressed', String(playing));
+			button!.setAttribute('aria-label', playing ? 'Silenciar música ambiental' : 'Activar música ambiental');
+			offIcon.classList.toggle('hidden', playing);
+			onIcon.classList.toggle('hidden', !playing);
+			label.textContent = playing ? 'Música encendida' : 'Música apagada';
+		}
+
+		function remember(playing: boolean) {
+			try {
+				localStorage.setItem(STORAGE_KEY, playing ? 'on' : 'off');
+			} catch {
+				// Private browsing can refuse storage; the toggle still works,
+				// it just will not be remembered.
+			}
+		}
+
+		// The AudioContext is created on demand: building one before a user
+		// gesture leaves it suspended and burns an audio thread for nothing.
+		async function play() {
+			if (!context) {
+				context = new AudioContext();
+				music = createAmbientMusic(context);
+			}
+			if (context.state === 'suspended') await context.resume();
+			music!.start();
+			render(true);
+		}
+
+		function pause() {
+			music?.stop();
+			render(false);
+		}
+
+		button.addEventListener('click', async () => {
+			const playing = button.getAttribute('aria-pressed') === 'true';
+			if (playing) {
+				pause();
+			} else {
+				await play();
+			}
+			remember(!playing);
+		});
+
+		let stored: string | null = null;
+		try {
+			stored = localStorage.getItem(STORAGE_KEY);
+		} catch {
+			stored = null;
+		}
+
+		// Autoplay policy blocks audio until the page has been interacted with,
+		// so a remembered "on" waits for the first gesture instead of firing on
+		// load and being silently suspended.
+		if (stored === 'on') {
+			const resume = () => {
+				play().catch(() => remember(false));
+			};
+			document.addEventListener('pointerdown', resume, { once: true });
+			document.addEventListener('keydown', resume, { once: true });
+		}
+	}
+</script>

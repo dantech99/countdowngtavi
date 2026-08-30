@@ -3,6 +3,10 @@
 // Curated on purpose: YouTube's channel feed only exposes Rockstar's 15 most
 // recent uploads, so the older trailers fall out of it within weeks. Every id
 // here was verified against https://www.youtube.com/oembed.
+/**
+ * @typedef {{ id: string, label: string, title: string, publishedAt: string, poster: 'sunset' | 'neon' }} Trailer
+ * @type {readonly Trailer[]}
+ */
 export const TRAILERS = [
   {
     id: 'tJbzMqJGH4k',
