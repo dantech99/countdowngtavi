@@ -14,10 +14,25 @@ export function isGtaNews(item) {
   return GTA_PATTERN.test(item.title ?? '');
 }
 
-export async function fetchAggregated(feeds = FEEDS) {
+async function fetchAndFilter(feeds) {
   const parser = new Parser();
   const items = await fetchAllFeeds(feeds, parser.parseURL.bind(parser));
-  return items.filter(isGtaNews);
+  return items.filter(isGtaNews).filter((item) => item.link !== '');
+}
+
+// Memoizes the default-feeds fetch at module scope so a single build only
+// performs one fetch round, no matter how many pages call fetchAggregated().
+// Calls with explicit feeds (used by tests) always bypass the cache.
+let cachedAggregated;
+
+export async function fetchAggregated(feeds = FEEDS) {
+  if (feeds !== FEEDS) {
+    return fetchAndFilter(feeds);
+  }
+  if (!cachedAggregated) {
+    cachedAggregated = fetchAndFilter(feeds);
+  }
+  return cachedAggregated;
 }
 
 export function mergeNews(articulos, aggregated) {

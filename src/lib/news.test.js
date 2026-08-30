@@ -1,6 +1,15 @@
 // src/lib/news.test.js
-import { describe, it, expect } from 'vitest';
-import { mergeNews, isGtaNews, FEEDS } from './news.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const { parseURL } = vi.hoisted(() => ({ parseURL: vi.fn() }));
+
+vi.mock('rss-parser', () => ({
+  default: vi.fn().mockImplementation(function FakeParser() {
+    this.parseURL = parseURL;
+  }),
+}));
+
+const { mergeNews, isGtaNews, FEEDS, fetchAggregated } = await import('./news.js');
 
 const articulo = (title, pubDate) => ({ id: title, data: { title, pubDate: new Date(pubDate) } });
 const agregado = (title, pubDate) => ({ title, link: `https://x/${title}`, pubDate: pubDate ? new Date(pubDate) : null, source: 'GameSpot' });
@@ -53,5 +62,19 @@ describe('mergeNews', () => {
 
   it('returns an empty array when there is nothing to show', () => {
     expect(mergeNews([], [])).toEqual([]);
+  });
+});
+
+describe('fetchAggregated memoization', () => {
+  beforeEach(() => {
+    parseURL.mockReset();
+    parseURL.mockResolvedValue({ items: [] });
+  });
+
+  it('performs only one fetch round across multiple calls with the default feeds', async () => {
+    await fetchAggregated();
+    await fetchAggregated();
+
+    expect(parseURL).toHaveBeenCalledTimes(FEEDS.length);
   });
 });
