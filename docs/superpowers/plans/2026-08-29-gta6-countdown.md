@@ -383,7 +383,7 @@ export const collections = { articulos };
 
 - [ ] **Step 2: Add a real sample article with a cover image reference**
 
-Note: this step references `./portada.jpg` in the frontmatter, but does not fabricate an actual image file — that would be a broken binary. Before running the verification in Step 3, place a real JPEG/PNG named `portada.jpg` next to this article (any placeholder photo is fine for now; the spec already flags final key art as a pending item).
+Note: the cover image this frontmatter points at already exists at `src/content/articulos/portada.jpg` (1200x616 JPEG, committed during setup in `c5204e3` — downscaled from the hero background art as a stand-in until the team supplies final art). Do not create, replace, or regenerate it; just reference it as `./portada.jpg`, which resolves relative to this article's own directory.
 
 ```markdown
 ---
