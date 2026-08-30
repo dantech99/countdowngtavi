@@ -679,9 +679,17 @@ type Props = PropioProps | AgregadoProps;
 
 const props = Astro.props;
 
-function formatDate(date: Date | null) {
+// `dateOnly` pins calendar-day values (the collection's `pubDate`) to UTC, so a
+// date authored as 2026-08-29 never renders as the 28th in a UTC-negative zone.
+// Aggregated RSS items carry real timestamps and stay in the viewer's local time.
+function formatDate(date: Date | null, dateOnly = false) {
 	if (!date) return '';
-	return date.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
+	return date.toLocaleDateString('es', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		...(dateOnly ? { timeZone: 'UTC' } : {}),
+	});
 }
 ---
 
@@ -690,7 +698,7 @@ function formatDate(date: Date | null) {
 		<a href={props.href} class="block rounded-lg bg-white/5 overflow-hidden hover:bg-white/10 transition-colors">
 			<Image src={props.coverSrc} alt={props.coverAlt} class="h-40 w-full object-cover" widths={[400, 800]} sizes="(min-width: 768px) 400px, 100vw" />
 			<div class="p-4">
-				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate)}</p>
+				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate, true)}</p>
 				<h3 class="mt-1 text-lg font-bold">{props.title}</h3>
 				<p class="mt-2 text-sm text-white/70">{props.description}</p>
 			</div>
@@ -1010,7 +1018,7 @@ const { Content } = await render(entry);
 <Layout title={`${entry.data.title} — GTA 6 Countdown`} description={entry.data.description}>
 	<article class="mx-auto max-w-3xl px-4 py-16">
 		<p class="text-xs uppercase tracking-wide text-white/50">
-			{entry.data.author} · {entry.data.pubDate.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}
+			{entry.data.author} · {entry.data.pubDate.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
 		</p>
 		<h1 class="mt-2 text-3xl font-black">{entry.data.title}</h1>
 		<Image src={entry.data.cover} alt={entry.data.coverAlt} class="mt-6 w-full rounded-lg object-cover" widths={[600, 1200]} sizes="(min-width: 768px) 768px, 100vw" />
