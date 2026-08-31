@@ -20,7 +20,7 @@ Landing page estática con contador regresivo al lanzamiento de GTA VI, sección
 - **GSAP + ScrollTrigger**, como dependencia npm estándar, usada dentro de `<script>` tags en componentes Astro (no en el frontmatter, que corre en build-time sin DOM).
 - **Astro Content Collections** para los artículos propios, con el helper `image()` en el schema para validar y optimizar la imagen de portada.
 - `**rss-parser**` (o librería equivalente) para leer feeds RSS de medios de gaming/GTA en build-time.
-- **Ko-fi** embebido para donaciones puntuales.
+- **PayPal.me** como enlace directo para donaciones puntuales.
 - **Vercel** como hosting, con un Cron Job (`vercel.json`) que dispara un Deploy Hook cada 6 horas para refrescar noticias.
 
 ## Estructura de carpetas
@@ -106,7 +106,7 @@ src/
 
 ## Donaciones
 
-- Sección `Donations.astro` con embed/botón de Ko-fi (sin comisión propia de la plataforma sobre donaciones puntuales, setup simple, sin cuenta de empresa).
+- Sección `Donations.astro` con un botón que enlaza a PayPal.me (sin scripts de terceros, setup simple, sin cuenta de empresa).
 
 ## Testing
 

@@ -1056,9 +1056,9 @@ git commit -m "feat: add article detail page"
 **Interfaces:**
 - Produces: `Donations` component (no props) and `Footer` component (no props), both consumed by Task 11 (`pages/index.astro`).
 
-- [ ] **Step 1: Build the Donations section with a Ko-fi link**
+- [ ] **Step 1: Build the Donations section with a PayPal.me link**
 
-Note: replace `tu-usuario-kofi` with the team's real Ko-fi handle once created — this is a placeholder link, not placeholder logic, and is explicitly called out here rather than left implicit.
+Note: replace `tu-usuario-paypal` with the team's real PayPal.me handle once created — this is a placeholder link, not placeholder logic, and is explicitly called out here rather than left implicit.
 
 ```astro
 ---
@@ -1072,12 +1072,12 @@ Note: replace `tu-usuario-kofi` with the team's real Ko-fi handle once created �
 		apenas salga. Si te copa el proyecto, cualquier aporte suma.
 	</p>
 	<a
-		href="https://ko-fi.com/tu-usuario-kofi"
+		href="https://www.paypal.me/tu-usuario-paypal"
 		target="_blank"
 		rel="noopener noreferrer"
 		class="mt-6 inline-block rounded-full bg-red-600 px-8 py-3 font-bold uppercase tracking-wide hover:bg-red-500 transition-colors"
 	>
-		Donar en Ko-fi
+		Donar con PayPal
 	</a>
 </section>
 ```
@@ -1213,7 +1213,7 @@ Checklist (golden path):
 - Scrolling past the hero fades the news preview section in.
 - The 3 preview cards show a correct mix of propio/agregado styling.
 - "Ver más noticias" link navigates to `/noticias`.
-- Donations section renders with a working Ko-fi link (opens in a new tab).
+- Donations section renders with a working PayPal.me link (opens in a new tab).
 - Footer renders with working anchor/internal links.
 
 Edge cases:

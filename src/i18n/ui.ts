@@ -44,6 +44,7 @@ const es = {
 	'donations.heading': 'Ayúdanos a llegar',
 	'donations.body':
 		'Hola, somos un grupo de amigos que queremos juntar dinero para comprar una consola para jugar GTA VI apenas salga. Si te gusta el proyecto, cualquier aporte suma.',
+	'donations.cta': 'Donar con PayPal',
 
 	'footer.disclaimer': 'No afiliado con Rockstar Games o Take-Two Interactive.',
 
@@ -100,6 +101,7 @@ const en = {
 	'donations.heading': 'Help us get there',
 	'donations.body':
 		"Hi, we're a group of friends trying to raise money for a console so we can play GTA VI the day it drops. If you like the project, anything helps.",
+	'donations.cta': 'Donate with PayPal',
 
 	'footer.disclaimer': 'Not affiliated with Rockstar Games or Take-Two Interactive.',
 
