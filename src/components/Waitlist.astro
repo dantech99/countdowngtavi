@@ -28,9 +28,19 @@
 
 <script>
 	import { gsap } from 'gsap';
-	import { formatCount } from '../lib/waitlist.js';
+	import { formatCount, isValidMemberId } from '../lib/waitlist.js';
 
 	const STORAGE_KEY = 'gta6:waitlist';
+
+	interface StoredState {
+		id: string;
+		joined: boolean;
+	}
+
+	// Kept alongside localStorage, not instead of it: private browsing can
+	// refuse to persist, but a retry later in the same page session must still
+	// reuse this id rather than mint a new one and inflate the count.
+	let memoryState: StoredState | null = null;
 
 	const button = document.getElementById('waitlist-button') as HTMLButtonElement | null;
 
@@ -59,21 +69,30 @@
 			};
 		});
 
-		function readId(): string | null {
+		// A malformed or unparseable stored value is treated as "no state" so a
+		// hand-edited or corrupted key never locks the visitor out permanently.
+		function readState(): StoredState | null {
+			if (memoryState) return memoryState;
 			try {
-				return localStorage.getItem(STORAGE_KEY);
+				const raw = localStorage.getItem(STORAGE_KEY);
+				if (!raw) return null;
+				const parsed = JSON.parse(raw);
+				if (!isValidMemberId(parsed?.id)) return null;
+				const state: StoredState = { id: parsed.id, joined: parsed.joined === true };
+				memoryState = state;
+				return state;
 			} catch {
-				// Private browsing can refuse storage; the button still works, it
-				// just will not remember that this visitor already joined.
 				return null;
 			}
 		}
 
-		function rememberId(id: string) {
+		function writeState(state: StoredState) {
+			memoryState = state;
 			try {
-				localStorage.setItem(STORAGE_KEY, id);
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 			} catch {
-				// Same as above: failing to remember is fine, throwing is not.
+				// Private browsing can refuse storage; memoryState still keeps the
+				// id in memory for the rest of this page session.
 			}
 		}
 
@@ -84,7 +103,10 @@
 				state === 'sending' ? 'Sumándote…' : state === 'joined' ? 'Ya estás dentro ✓' : 'Me sumo';
 		}
 
-		function showCount(count: number) {
+		function showCount(count: unknown) {
+			// A misbehaving endpoint should not render NaN: leave the counter in
+			// whatever state it was already in.
+			if (typeof count !== 'number' || !Number.isFinite(count)) return;
 			const { value, label } = formatCount(count);
 			valueEl.textContent = value;
 			labelEl.textContent = label;
@@ -94,20 +116,32 @@
 
 		// The markup ships the button disabled so that a visitor without
 		// JavaScript never sees a control that silently does nothing.
-		render(readId() ? 'joined' : 'idle');
+		render(readState()?.joined === true ? 'joined' : 'idle');
+
+		// The initial GET can be served from the edge cache and resolve after a
+		// click's POST already painted a fresher number; once that happens this
+		// stale response must be discarded instead of overwriting it.
+		let hasFresherCount = false;
 
 		// The number is nice to have, not load-bearing: if it cannot be read the
 		// counter stays hidden rather than showing a zero that is not true.
 		fetch('/api/waitlist')
 			.then((res) => (res.ok ? res.json() : Promise.reject(new Error('unavailable'))))
-			.then((data) => showCount(data.count))
+			.then((data) => {
+				if (!hasFresherCount) showCount(data.count);
+			})
 			.catch(() => {});
 
 		button.addEventListener('click', async () => {
 			errorEl.textContent = '';
 			render('sending');
 
-			const id = readId() ?? crypto.randomUUID();
+			const id = readState()?.id ?? crypto.randomUUID();
+			// Persisted before the fetch: if the write reaches Redis but the
+			// response is lost, the id survives so a retry reuses it instead of
+			// minting a new one and inflating the count. "joined" stays false
+			// until a response actually confirms it.
+			writeState({ id, joined: false });
 
 			try {
 				const res = await fetch('/api/waitlist', {
@@ -118,12 +152,14 @@
 				if (!res.ok) throw new Error('join failed');
 
 				const data = await res.json();
-				rememberId(id);
+				writeState({ id, joined: true });
+				hasFresherCount = true;
 				showCount(data.count);
 				render('joined');
 			} catch {
-				// Nothing is remembered on failure, so the next click retries with
-				// the same id and the count still cannot drift.
+				// The id was already persisted before the request, so the next
+				// click reuses it instead of minting a new one — the count still
+				// cannot drift.
 				render('idle');
 				errorEl.textContent = 'No pudimos sumarte. Intenta de nuevo.';
 			}
