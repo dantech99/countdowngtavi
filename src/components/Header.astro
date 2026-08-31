@@ -1,0 +1,97 @@
+---
+// src/components/Header.astro
+//
+// Sin props a propósito: todo se deriva de la URL y de la colección. El Header
+// lee los pares de traducción él mismo en vez de recibirlos como prop, para no
+// arrastrarlos por el Layout — es costo de build y la colección ya está cacheada.
+import { getCollection } from 'astro:content';
+import { buildTranslationIndex } from '../lib/articulos.js';
+import { getLangFromUrl, localizePath, switchLangPath, useTranslations } from '../i18n/utils';
+import { LANGS } from '../i18n/ui';
+
+const pathname = Astro.url.pathname;
+const lang = getLangFromUrl(pathname);
+const t = useTranslations(lang);
+const translations = buildTranslationIndex(await getCollection('articulos'));
+---
+
+<header
+	id="site-header"
+	class="fixed inset-x-0 top-0 z-40 border-b border-transparent transition-colors duration-300"
+>
+	<nav class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+		<a
+			href={localizePath(lang, '/')}
+			class="gta-outline-soft text-sm font-black uppercase tracking-wide hover:text-white"
+		>
+			{t('site.name')}
+		</a>
+
+		<a
+			href={localizePath(lang, '/noticias')}
+			class="ml-auto text-sm uppercase tracking-wide text-white/70 transition-colors hover:text-white"
+		>
+			{t('nav.news')}
+		</a>
+
+		{/* Son <a> reales, no botones: funcionan sin JS, Google los rastrea, y su
+		    href es el mismo valor que calcula el hreflang del Layout. */}
+		<div
+			class="flex overflow-hidden rounded-full border border-white/20 bg-black/70 text-xs font-bold uppercase backdrop-blur"
+			role="group"
+			aria-label={t('lang.switch')}
+		>
+			{
+				LANGS.map((code) => (
+					<a
+						href={switchLangPath(pathname, code, translations)}
+						hreflang={code}
+						lang={code}
+						data-lang={code}
+						aria-current={code === lang ? 'true' : undefined}
+						class="px-3 py-1 transition-colors hover:bg-white/10 aria-[current=true]:bg-white aria-[current=true]:text-black"
+					>
+						{code}
+					</a>
+				))
+			}
+		</div>
+	</nav>
+</header>
+
+<script>
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const header = document.getElementById('site-header');
+
+	if (header) {
+		// Transparente arriba del todo y sólido al bajar. En la home eso descubre
+		// el hero completo; en el resto del sitio el body ya es negro, así que el
+		// estado transparente es indistinguible del sólido y no hace falta que el
+		// componente sepa en qué página está.
+		const SOLID = ['bg-black/70', 'backdrop-blur', 'border-white/10'];
+
+		ScrollTrigger.create({
+			trigger: document.body,
+			start: 'top -80',
+			onEnter: () => header.classList.add(...SOLID),
+			onLeaveBack: () => header.classList.remove(...SOLID),
+		});
+
+		// La preferencia se guarda antes de que la navegación siga su curso. Sin
+		// JS el link funciona igual, solo no se recuerda. El try/catch es el mismo
+		// que usan MusicToggle y Waitlist: el modo privado puede lanzar.
+		for (const link of header.querySelectorAll<HTMLAnchorElement>('[data-lang]')) {
+			link.addEventListener('click', () => {
+				try {
+					localStorage.setItem('gta6:lang', link.dataset.lang!);
+				} catch {
+					// El switch igual navega; solo no queda recordado.
+				}
+			});
+		}
+	}
+</script>
