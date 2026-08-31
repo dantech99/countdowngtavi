@@ -1,9 +1,14 @@
 ---
 // src/layouts/Layout.astro
 import "../styles/global.css";
+import { getCollection } from "astro:content";
 import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
 import MusicToggle from "../components/MusicToggle.astro";
 import Analytics from "@vercel/analytics/astro";
+import { buildTranslationIndex } from "../lib/articulos.js";
+import { alternatePath, getLangFromUrl } from "../i18n/utils";
+import { DEFAULT_LANG, LANGS } from "../i18n/ui";
 
 interface Props {
     title: string;
@@ -11,17 +16,66 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+
+const pathname = Astro.url.pathname;
+const lang = getLangFromUrl(pathname);
+
+// El 404 responde a cualquier URL inexistente, así que no tiene una URL
+// canónica propia ni una contraparte que declarar.
+const isNotFound = pathname === "/404" || pathname === "/404/";
+
+const translations = buildTranslationIndex(await getCollection("articulos"));
+
+const canonical = isNotFound ? null : new URL(pathname, Astro.site).href;
+
+// Solo se declara un hreflang cuando la contraparte existe de verdad. Un
+// artículo sin traducir no emite ninguno: apuntar al índice, como sí hace el
+// switch, sería declarar una traducción falsa y Google lo descarta.
+const alternates = isNotFound
+    ? []
+    : LANGS.map((code) => ({ code, path: alternatePath(pathname, code, translations) }))
+          .filter((entry) => entry.path !== null)
+          .map((entry) => ({
+              code: entry.code,
+              href: new URL(entry.path!, Astro.site).href,
+          }));
+
+const xDefault = alternates.find((entry) => entry.code === DEFAULT_LANG)?.href ?? null;
+
+// La detección solo corre en la raíz en español: entrar directo a cualquier
+// otra URL es un link explícito y se respeta. No escribe nada en localStorage
+// —solo el switch escribe—, lo que la deja idempotente. `location.replace` no
+// ensucia el historial, así que el botón "atrás" no queda atrapado.
+const detectLanguage = pathname === "/";
+const DETECT_SCRIPT = `try {
+  if (!localStorage.getItem('gta6:lang') && navigator.language.toLowerCase().startsWith('en')) {
+    location.replace('/en/');
+  }
+} catch (e) {}`;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {
+            /* Bloqueante y antes de cualquier estilo: corre antes del primer
+               paint, así que el visitante nunca llega a ver la home en español
+               antes de rebotar. */
+            detectLanguage && <script is:inline set:html={DETECT_SCRIPT} />
+        }
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="generator" content={Astro.generator} />
         <meta name="description" content={description} />
+        {canonical && <link rel="canonical" href={canonical} />}
+        {
+            alternates.map((entry) => (
+                <link rel="alternate" hreflang={entry.code} href={entry.href} />
+            ))
+        }
+        {xDefault && <link rel="alternate" hreflang="x-default" href={xDefault} />}
         <title>{title}</title>
         <script
             async
@@ -29,6 +83,7 @@ const { title, description } = Astro.props;
             crossorigin="anonymous"></script>
     </head>
     <body class="bg-black text-white">
+        <Header />
         <slot />
         <Footer />
         <MusicToggle />
