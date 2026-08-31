@@ -24,7 +24,13 @@ La home ya tiene contador, trailers, noticias y donaciones, pero no ofrece ningu
 - Panel de administración o exportación de la lista.
 - Cualquier rediseño de las secciones existentes. Lo único que se toca fuera de la sección nueva es montarla en `index.astro` y sumar su enlace al footer.
 
-**Consecuencia aceptada del anti-abuso ausente:** alguien con un script puede inflar el contador, y alguien en ventana de incógnito puede sumarse más de una vez. Es una decisión tomada, no un descuido. La deduplicación por navegador frena la duplicación accidental y el spam de F5, que es el caso real. El endpoint queda estructurado de forma que agregar rate limiting después no exige rehacer el flujo.
+**Consecuencia aceptada del anti-abuso ausente:** alguien con un script puede inflar el contador, y alguien en ventana de incógnito puede sumarse más de una vez. Es una decisión tomada, no un descuido, pero conviene ser explícitos sobre el costo real:
+
+- La inflación es **permanente e irrecuperable**. No hay panel de administración ni ningún camino para restar miembros del set: por diseño, el dato una vez escrito no se puede corregir.
+- Cada `POST` cuesta dos comandos de Upstash (`SADD` + `SCARD`) más el almacenamiento durable del id. Un episodio de abuso consume cuota real de la cuenta, no solo tiempo de CPU.
+- El set crece sin techo. Si llega a llenar el tier contratado, `SADD` empieza a fallar, el endpoint responde `502`, y el contador queda congelado en un valor incorrecto hasta que se libere espacio.
+
+La deduplicación por navegador frena la duplicación accidental y el spam de F5, que es el caso real. El endpoint queda estructurado de forma que agregar rate limiting después no exige rehacer el flujo. Como mitigación a nivel de plataforma —sin tocar código, en línea con la decisión de alcance de no traer rate limiting propio— se recomienda una regla de rate-limit del Vercel Firewall sobre `/api/waitlist` y una alerta de gasto en Upstash.
 
 ## Stack
 
@@ -79,7 +85,13 @@ El contador **es** el cardinal del set. No existe un contador separado, así que
 
 ### Identidad del visitante
 
-El navegador genera un UUID v4 con `crypto.randomUUID()` la primera vez que el visitante se suma, y lo guarda en `localStorage` bajo la clave `gta6:waitlist`, siguiendo la convención de `gta6:music`. El acceso a `localStorage` va envuelto en `try/catch`, como ya hace `MusicToggle.astro`: la navegación privada puede rechazar el almacenamiento, y en ese caso el botón debe seguir funcionando aunque no se recuerde el estado.
+El navegador genera un UUID v4 con `crypto.randomUUID()` la primera vez que el visitante hace clic, y lo guarda en `localStorage` bajo la clave `gta6:waitlist`, siguiendo la convención de `gta6:music`. El valor guardado no es el UUID solo: es un objeto `{ id, joined }`, donde `id` es el UUID y `joined` es un booleano.
+
+Esa separación existe porque el id se persiste **antes** del `POST`, no después de una respuesta exitosa: si la escritura llega a Redis pero la respuesta se pierde (conexión caída, timeout de la función, 502 en el camino de vuelta), el visitante ve el error y puede reintentar, y el reintento tiene que reutilizar el mismo id en vez de generar uno nuevo — de lo contrario ese id perdido se convierte en un segundo miembro del mismo navegador y el contador queda inflado de forma permanente. `joined` arranca en `false` al persistir el id y solo pasa a `true` cuando una respuesta confirma el alta; el botón solo se pinta como "ya estás dentro" cuando `joined === true`.
+
+Además del `localStorage`, el script guarda el mismo estado en una variable de módulo: si `localStorage` lanza (navegación privada), un reintento dentro de la misma sesión de página igual reutiliza el id en memoria en vez de generar uno distinto.
+
+El acceso a `localStorage` va envuelto en `try/catch`, como ya hace `MusicToggle.astro`: la navegación privada puede rechazar el almacenamiento, y en ese caso el botón debe seguir funcionando aunque no se recuerde el estado entre visitas. Un valor guardado que no parsea o cuyo `id` no tiene forma de UUID v4 se trata como ausencia de estado, no como error: así un valor corrupto o editado a mano nunca deja al botón bloqueado sin salida.
 
 El id no se asocia a ninguna otra información. No identifica a una persona fuera de este sitio.
 
@@ -95,6 +107,10 @@ El estado guardado en el navegador es cosmético: sirve para pintar el botón co
 
 Responde con `Cache-Control: public, s-maxage=30`, para que el edge de Vercel sirva el número cacheado y no despierte una función en cada visita. Un desfase de hasta 30 segundos no tiene consecuencia aquí, y quien acaba de sumarse ve el valor exacto porque viene en la respuesta del `POST`.
 
+**`HEAD /api/waitlist`**
+
+Se comporta igual que `GET`: mismo código, mismos encabezados (incluido `Cache-Control`), sin cuerpo.
+
 **`POST /api/waitlist`**
 
 Cuerpo: `{ "id": "<uuid v4>" }`
@@ -109,10 +125,12 @@ Cuerpo: `{ "id": "<uuid v4>" }`
 
 | Situación | Código | Cuerpo |
 |---|---|---|
-| Método distinto de GET/POST | 405 | `{ "error": "method_not_allowed" }` |
+| Método distinto de GET/HEAD/POST | 405 | `{ "error": "method_not_allowed" }` |
 | JSON malformado, sin `id`, o `id` que no tiene forma de UUID v4 | 400 | `{ "error": "invalid_id" }` |
 | Credenciales de Upstash ausentes en el entorno | 503 | `{ "error": "unavailable" }` |
 | Fallo de Upstash | 502 | `{ "error": "upstream" }` |
+
+No todo método no soportado llega a esta tabla. El middleware `security.checkOrigin` de Astro corre antes de la ruta y rechaza con su propio `403 "Cross-site <método> form submissions are forbidden"` una petición de origen cruzado cuyo `Content-Type` esté ausente o sea de tipo formulario (por ejemplo un `DELETE` sin `Content-Type`), sin que el handler la vea nunca. `OPTIONS` está exento de ese chequeo por ser un método "seguro", pero eso no significa que Astro lo responda por su cuenta: en la función desplegada, `OPTIONS` cae en el mismo export `ALL` que todo lo demás y recibe lo que `handleWaitlistRequest` le dé a un método no reconocido (503 sin credenciales, 405 una vez configuradas). El `204` que se observa al correr `astro dev` viene del middleware de CORS propio del servidor de desarrollo de Vite, no existe en producción.
 
 El endpoint solo valida la forma del id y rechaza cuerpos de más de 1024 caracteres. Nada más, en coherencia con el alcance.
 
@@ -131,8 +149,8 @@ Se accede a ellas por `astro:env/server`, no por `Redis.fromEnv()`. `fromEnv()` 
 
 1. La home se sirve prerenderizada, con el contador en `—`. El número no puede venir del HTML porque quedaría congelado en el momento del build; es el mismo motivo por el que el countdown del hero arranca en `--`.
 2. Al cargar, el script hace `GET /api/waitlist` y pinta el número.
-3. Al hacer clic, el script lee el id de `localStorage` o genera uno nuevo, y hace `POST`.
-4. Con la respuesta, actualiza el contador, marca el botón como "ya estás dentro" y guarda el estado local.
+3. Al hacer clic, el script lee el id guardado o genera uno nuevo, lo persiste como `{ id, joined: false }` **antes** de llamar al endpoint, y hace `POST`.
+4. Con la respuesta exitosa, actualiza el contador, marca el botón como "ya estás dentro" y persiste `{ id, joined: true }`. Si la petición falla, el id ya quedó guardado, así que el próximo clic reintenta con el mismo id en vez de generar uno nuevo.
 
 ## Diseño / UX
 
