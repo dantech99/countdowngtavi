@@ -22,7 +22,22 @@ async function handleGet(store) {
 }
 
 async function handlePost(request, store) {
-  const raw = await request.text();
+  // Content-Length can lie or be absent, but when it is present and already
+  // over the cap there is no reason to buffer the body at all.
+  const contentLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_CHARS) {
+    return json({ error: 'invalid_id' }, 400);
+  }
+
+  let raw;
+  try {
+    raw = await request.text();
+  } catch {
+    return json({ error: 'invalid_id' }, 400);
+  }
+
+  // raw.length counts UTF-16 code units, not bytes, but that only makes the
+  // cap stricter for multi-byte input, never looser.
   if (raw.length > MAX_BODY_CHARS) {
     return json({ error: 'invalid_id' }, 400);
   }
@@ -50,7 +65,7 @@ export async function handleWaitlistRequest(request, store) {
     return json({ error: 'unavailable' }, 503);
   }
 
-  if (request.method === 'GET') {
+  if (request.method === 'GET' || request.method === 'HEAD') {
     return await handleGet(store);
   }
 

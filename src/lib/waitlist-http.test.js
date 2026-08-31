@@ -60,6 +60,18 @@ describe('handleWaitlistRequest — GET', () => {
   });
 });
 
+describe('handleWaitlistRequest — HEAD', () => {
+  it('treats HEAD like GET', async () => {
+    const store = createFakeStore();
+    await store.sadd(MEMBERS_KEY, VALID_ID);
+
+    const res = await handleWaitlistRequest(new Request(URL, { method: 'HEAD' }), store);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('public, s-maxage=30');
+  });
+});
+
 describe('handleWaitlistRequest — POST', () => {
   it('joins a new member', async () => {
     const res = await handleWaitlistRequest(
@@ -90,6 +102,7 @@ describe('handleWaitlistRequest — POST', () => {
   it('rejects a body without an id', async () => {
     const res = await handleWaitlistRequest(postRequest(JSON.stringify({})), createFakeStore());
     expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
   });
 
   it('rejects an id that is not a v4 UUID', async () => {
@@ -98,6 +111,15 @@ describe('handleWaitlistRequest — POST', () => {
       createFakeStore(),
     );
     expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
+  });
+
+  it('rejects a body that parses to a non-object', async () => {
+    for (const raw of ['null', '[]']) {
+      const res = await handleWaitlistRequest(postRequest(raw), createFakeStore());
+      expect(res.status).toBe(400);
+      await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
+    }
   });
 
   it('rejects an oversized body', async () => {
@@ -106,6 +128,44 @@ describe('handleWaitlistRequest — POST', () => {
       createFakeStore(),
     );
     expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
+  });
+
+  // Checked before the body is read at all, so an obviously oversized upload
+  // never gets buffered into memory first.
+  it('rejects an oversized body based on Content-Length alone', async () => {
+    const res = await handleWaitlistRequest(
+      new Request(URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': '999999' },
+        body: JSON.stringify({ id: VALID_ID }),
+      }),
+      createFakeStore(),
+    );
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
+  });
+
+  // A truncated or aborted body stream must surface as the documented 400,
+  // not as an unhandled rejection that Astro turns into an opaque 500.
+  it('rejects a request whose body read fails', async () => {
+    const body = new ReadableStream({
+      start(controller) {
+        controller.error(new Error('client aborted the upload'));
+      },
+    });
+
+    const res = await handleWaitlistRequest(
+      new Request(URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+        duplex: 'half',
+      }),
+      createFakeStore(),
+    );
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'invalid_id' });
   });
 });
 
