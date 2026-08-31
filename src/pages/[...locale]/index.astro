@@ -1,18 +1,32 @@
 ---
-// src/pages/index.astro
+// src/pages/[...locale]/index.astro
 import { getCollection } from 'astro:content';
-import Layout from '../layouts/Layout.astro';
-import Hero from '../components/Hero.astro';
-import Waitlist from '../components/Waitlist.astro';
-import NewsCard from '../components/NewsCard.astro';
-import Donations from '../components/Donations.astro';
-import TrailerCard from '../components/TrailerCard.astro';
-import { fetchAggregated, mergeNews } from '../lib/news.js';
-import { getLatestTrailers, watchUrl } from '../lib/trailers.js';
+import Layout from '../../layouts/Layout.astro';
+import Hero from '../../components/Hero.astro';
+import Waitlist from '../../components/Waitlist.astro';
+import NewsCard from '../../components/NewsCard.astro';
+import Donations from '../../components/Donations.astro';
+import TrailerCard from '../../components/TrailerCard.astro';
+import { fetchAggregated, mergeNews } from '../../lib/news.js';
+import { getLatestTrailers, watchUrl } from '../../lib/trailers.js';
+import { articleSlug, byLang } from '../../lib/articulos.js';
+import { getLangFromUrl, localizePath, useTranslations } from '../../i18n/utils';
+import { DEFAULT_LANG, LANGS } from '../../i18n/ui';
+
+// locale: undefined genera la ruta sin prefijo (/), que es cómo el idioma
+// por defecto se queda en las URLs que el sitio ya tenía indexadas.
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({
+		params: { locale: lang === DEFAULT_LANG ? undefined : lang },
+	}));
+}
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 
 const trailers = getLatestTrailers(2);
 const aggregated = await fetchAggregated();
-const articulos = await getCollection('articulos');
+const articulos = byLang(await getCollection('articulos'), lang);
 const merged = mergeNews(articulos, aggregated);
 
 const PREVIEW_COUNT = 9;
@@ -29,13 +43,13 @@ const preview = newestPropio
 	: merged.slice(0, PREVIEW_COUNT);
 ---
 
-<Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
+<Layout title={t('home.title')} description={t('home.description')}>
 	<Hero />
 
 	<Waitlist />
 
 	<section id="trailers" class="mx-auto max-w-5xl px-4 pt-20">
-		<h2 class="text-2xl font-black uppercase mb-8">Trailers</h2>
+		<h2 class="text-2xl font-black uppercase mb-8">{t('trailers.heading')}</h2>
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 			{trailers.map((trailer) => (
 				<TrailerCard
@@ -50,7 +64,7 @@ const preview = newestPropio
 	</section>
 
 	<section id="news-preview" class="mx-auto max-w-5xl px-4 py-20">
-		<h2 class="text-2xl font-black uppercase mb-8">Últimas noticias</h2>
+		<h2 class="text-2xl font-black uppercase mb-8">{t('news.latest')}</h2>
 		<div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:balance]">
 			{preview.map((entry) =>
 				entry.kind === 'propio' ? (
@@ -58,7 +72,7 @@ const preview = newestPropio
 						variant="propio"
 						title={entry.entry.data.title}
 						description={entry.entry.data.description}
-						href={`/noticias/${entry.entry.id}`}
+						href={localizePath(lang, `/noticias/${articleSlug(entry.entry.id)}`)}
 						coverSrc={entry.entry.data.cover}
 						coverAlt={entry.entry.data.coverAlt}
 						pubDate={entry.entry.data.pubDate}
@@ -75,8 +89,8 @@ const preview = newestPropio
 				)
 			)}
 		</div>
-		<a href="/noticias" class="mt-4 mx-auto block w-fit rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
-			Ver más noticias
+		<a href={localizePath(lang, '/noticias')} class="mt-4 mx-auto block w-fit rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
+			{t('news.more')}
 		</a>
 	</section>
 

@@ -7,6 +7,18 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   adapter: vercel(),
+
+  site: 'https://countdowngtavi.com',
+
+  // Declara los locales ante el framework. La generación de rutas es manual,
+  // vía el rest param [...locale] de src/pages, y el idioma se deriva con
+  // getLangFromUrl: un solo camino de código, cubierto por tests, sin depender
+  // de cómo interactúa la i18n nativa con rutas de rest param.
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'en'],
+    routing: { prefixDefaultLocale: false },
+  },
   // Names come from the Vercel Marketplace Upstash integration, which injects
   // its credentials with a KV_ prefix — not the UPSTASH_REDIS_REST_* names the
   // SDK's own fromEnv() looks for. Declared optional on purpose: a clone

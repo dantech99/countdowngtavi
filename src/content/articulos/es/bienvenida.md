@@ -3,7 +3,7 @@ title: "Bienvenidos al countdown de GTA 6"
 description: "Por qué creamos este sitio y qué van a encontrar aquí."
 pubDate: 2026-08-29
 author: "El equipo"
-cover: "./portada.jpg"
+cover: "../_assets/portada.jpg"
 coverAlt: "Arte de portada de GTA VI"
 ---
 

@@ -1,12 +1,24 @@
 ---
-// src/pages/noticias/index.astro
+// src/pages/[...locale]/noticias/index.astro
 import { getCollection } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
-import NewsCard from '../../components/NewsCard.astro';
-import { fetchAggregated, mergeNews } from '../../lib/news.js';
+import Layout from '../../../layouts/Layout.astro';
+import NewsCard from '../../../components/NewsCard.astro';
+import { fetchAggregated, mergeNews } from '../../../lib/news.js';
+import { articleSlug, byLang } from '../../../lib/articulos.js';
+import { getLangFromUrl, localizePath, useTranslations } from '../../../i18n/utils';
+import { DEFAULT_LANG, LANGS } from '../../../i18n/ui';
+
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({
+		params: { locale: lang === DEFAULT_LANG ? undefined : lang },
+	}));
+}
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 
 const aggregated = await fetchAggregated();
-const articulos = await getCollection('articulos');
+const articulos = byLang(await getCollection('articulos'), lang);
 const merged = mergeNews(articulos, aggregated);
 
 const INITIAL_COUNT = 9;
@@ -14,9 +26,9 @@ const visible = merged.slice(0, INITIAL_COUNT);
 const rest = merged.slice(INITIAL_COUNT);
 ---
 
-<Layout title="Noticias — GTA 6 Countdown" description="Artículos propios y últimas noticias sobre GTA VI.">
-	<main class="mx-auto max-w-5xl px-4 py-16">
-		<h1 class="text-3xl font-black uppercase mb-8">Noticias</h1>
+<Layout title={t('news.title')} description={t('news.description')}>
+	<main class="mx-auto max-w-5xl px-4 pt-24 pb-16">
+		<h1 class="text-3xl font-black uppercase mb-8">{t('news.heading')}</h1>
 
 		<div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:balance]" id="news-grid">
 			{visible.map((entry) =>
@@ -25,7 +37,7 @@ const rest = merged.slice(INITIAL_COUNT);
 						variant="propio"
 						title={entry.entry.data.title}
 						description={entry.entry.data.description}
-						href={`/noticias/${entry.entry.id}`}
+						href={localizePath(lang, `/noticias/${articleSlug(entry.entry.id)}`)}
 						coverSrc={entry.entry.data.cover}
 						coverAlt={entry.entry.data.coverAlt}
 						pubDate={entry.entry.data.pubDate}
@@ -52,7 +64,7 @@ const rest = merged.slice(INITIAL_COUNT);
 								variant="propio"
 								title={entry.entry.data.title}
 								description={entry.entry.data.description}
-								href={`/noticias/${entry.entry.id}`}
+								href={localizePath(lang, `/noticias/${articleSlug(entry.entry.id)}`)}
 								coverSrc={entry.entry.data.cover}
 								coverAlt={entry.entry.data.coverAlt}
 								pubDate={entry.entry.data.pubDate}
@@ -70,7 +82,7 @@ const rest = merged.slice(INITIAL_COUNT);
 					)}
 				</div>
 				<button id="load-more" class="mt-4 mx-auto block rounded-full border border-white/20 px-6 py-2 text-sm uppercase tracking-wide hover:bg-white/10">
-					Ver más noticias
+					{t('news.more')}
 				</button>
 			</>
 		)}

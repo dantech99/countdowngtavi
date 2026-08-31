@@ -12,6 +12,10 @@ const articulos = defineCollection({
       author: z.string(),
       cover: image(),
       coverAlt: z.string(),
+      // Empareja un artículo con su traducción. Opcional: si se omite, el
+      // emparejamiento cae al propio slug, que basta cuando el nombre del
+      // archivo es igual en los dos idiomas.
+      translationKey: z.string().optional(),
     }),
 });
 

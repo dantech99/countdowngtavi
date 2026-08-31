@@ -1,0 +1,44 @@
+---
+// src/pages/[...locale]/noticias/[slug].astro
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Layout from '../../../layouts/Layout.astro';
+import { articleLang, articleSlug } from '../../../lib/articulos.js';
+import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
+import { DEFAULT_LANG } from '../../../i18n/ui';
+
+// Cada artículo pertenece a exactamente un idioma, así que el locale de cada
+// ruta sale del directorio en el que vive el archivo.
+export async function getStaticPaths() {
+	const articulos = await getCollection('articulos');
+	return articulos.map((entry) => {
+		const lang = articleLang(entry.id);
+		return {
+			params: {
+				locale: lang === DEFAULT_LANG ? undefined : lang,
+				slug: articleSlug(entry.id),
+			},
+			props: { entry },
+		};
+	});
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
+---
+
+<Layout title={`${entry.data.title} — ${t('site.name')}`} description={entry.data.description}>
+	<article class="mx-auto max-w-3xl px-4 pt-24 pb-16">
+		<p class="text-xs uppercase tracking-wide text-white/50">
+			{entry.data.author} · {entry.data.pubDate.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}
+		</p>
+		<h1 class="mt-2 text-3xl font-black">{entry.data.title}</h1>
+		<Image src={entry.data.cover} alt={entry.data.coverAlt} class="mt-6 w-full rounded-lg object-cover" widths={[600, 1200]} sizes="(min-width: 768px) 768px, 100vw" />
+		<div class="prose prose-invert mt-8 max-w-none">
+			<Content />
+		</div>
+	</article>
+</Layout>
