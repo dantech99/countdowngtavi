@@ -1,0 +1,168 @@
+---
+// src/components/Waitlist.astro
+---
+
+<section id="waitlist" class="mx-auto max-w-2xl px-4 py-20 text-center">
+	<h2 class="text-2xl font-black uppercase">Súmate al lanzamiento</h2>
+	<p class="mt-4 text-white/70">Marca que vas a estar el día uno. Sin email, sin registro.</p>
+
+	<div class="mt-8" data-waitlist-count aria-live="polite" hidden>
+		<p class="gta-outline text-5xl font-black tabular-nums" data-waitlist-value>—</p>
+		<p class="gta-outline-soft mt-1 text-xs uppercase tracking-widest text-white/80" data-waitlist-label>
+			personas ya se sumaron
+		</p>
+	</div>
+
+	<button
+		id="waitlist-button"
+		type="button"
+		data-state="idle"
+		disabled
+		class="mt-8 rounded-full border border-white/20 px-8 py-3 text-sm font-black uppercase tracking-wide transition-colors hover:border-gta-pink hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed data-[state=joined]:border-gta-pink"
+	>
+		Me sumo
+	</button>
+
+	<p class="mt-4 h-5 text-sm text-white/60" role="status" data-waitlist-error></p>
+</section>
+
+<script>
+	import { gsap } from 'gsap';
+	import { formatCount, isValidMemberId } from '../lib/waitlist.js';
+
+	const STORAGE_KEY = 'gta6:waitlist';
+
+	interface StoredState {
+		id: string;
+		joined: boolean;
+	}
+
+	// Kept alongside localStorage, not instead of it: private browsing can
+	// refuse to persist, but a retry later in the same page session must still
+	// reuse this id rather than mint a new one and inflate the count.
+	let memoryState: StoredState | null = null;
+
+	const button = document.getElementById('waitlist-button') as HTMLButtonElement | null;
+
+	if (button) {
+		const section = document.getElementById('waitlist')!;
+		const counter = section.querySelector('[data-waitlist-count]') as HTMLElement;
+		const valueEl = section.querySelector('[data-waitlist-value]') as HTMLElement;
+		const labelEl = section.querySelector('[data-waitlist-label]') as HTMLElement;
+		const errorEl = section.querySelector('[data-waitlist-error]') as HTMLElement;
+
+		// Same treatment the countdown gives its digits, and the same guard the
+		// hero uses for its parallax: matchMedia keeps the motion off for anyone
+		// who asked for reduced motion, and reverts it if that changes.
+		let bump = () => {};
+		const mm = gsap.matchMedia();
+		mm.add('(prefers-reduced-motion: no-preference)', () => {
+			bump = () => {
+				gsap.fromTo(
+					valueEl,
+					{ scale: 1.3, opacity: 0.4 },
+					{ scale: 1, opacity: 1, duration: 0.35, ease: 'power2.out' },
+				);
+			};
+			return () => {
+				bump = () => {};
+			};
+		});
+
+		// A malformed or unparseable stored value is treated as "no state" so a
+		// hand-edited or corrupted key never locks the visitor out permanently.
+		function readState(): StoredState | null {
+			if (memoryState) return memoryState;
+			try {
+				const raw = localStorage.getItem(STORAGE_KEY);
+				if (!raw) return null;
+				const parsed = JSON.parse(raw);
+				if (!isValidMemberId(parsed?.id)) return null;
+				const state: StoredState = { id: parsed.id, joined: parsed.joined === true };
+				memoryState = state;
+				return state;
+			} catch {
+				return null;
+			}
+		}
+
+		function writeState(state: StoredState) {
+			memoryState = state;
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+			} catch {
+				// Private browsing can refuse storage; memoryState still keeps the
+				// id in memory for the rest of this page session.
+			}
+		}
+
+		function render(state: 'idle' | 'sending' | 'joined') {
+			button!.dataset.state = state;
+			button!.disabled = state !== 'idle';
+			button!.textContent =
+				state === 'sending' ? 'Sumándote…' : state === 'joined' ? 'Ya estás dentro ✓' : 'Me sumo';
+		}
+
+		function showCount(count: unknown) {
+			// A misbehaving endpoint should not render NaN: leave the counter in
+			// whatever state it was already in.
+			if (typeof count !== 'number' || !Number.isFinite(count)) return;
+			const { value, label } = formatCount(count);
+			valueEl.textContent = value;
+			labelEl.textContent = label;
+			counter.hidden = false;
+			bump();
+		}
+
+		// The markup ships the button disabled so that a visitor without
+		// JavaScript never sees a control that silently does nothing.
+		render(readState()?.joined === true ? 'joined' : 'idle');
+
+		// The initial GET can be served from the edge cache and resolve after a
+		// click's POST already painted a fresher number; once that happens this
+		// stale response must be discarded instead of overwriting it.
+		let hasFresherCount = false;
+
+		// The number is nice to have, not load-bearing: if it cannot be read the
+		// counter stays hidden rather than showing a zero that is not true.
+		fetch('/api/waitlist')
+			.then((res) => (res.ok ? res.json() : Promise.reject(new Error('unavailable'))))
+			.then((data) => {
+				if (!hasFresherCount) showCount(data.count);
+			})
+			.catch(() => {});
+
+		button.addEventListener('click', async () => {
+			errorEl.textContent = '';
+			render('sending');
+
+			const id = readState()?.id ?? crypto.randomUUID();
+			// Persisted before the fetch: if the write reaches Redis but the
+			// response is lost, the id survives so a retry reuses it instead of
+			// minting a new one and inflating the count. "joined" stays false
+			// until a response actually confirms it.
+			writeState({ id, joined: false });
+
+			try {
+				const res = await fetch('/api/waitlist', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ id }),
+				});
+				if (!res.ok) throw new Error('join failed');
+
+				const data = await res.json();
+				writeState({ id, joined: true });
+				hasFresherCount = true;
+				showCount(data.count);
+				render('joined');
+			} catch {
+				// The id was already persisted before the request, so the next
+				// click reuses it instead of minting a new one — the count still
+				// cannot drift.
+				render('idle');
+				errorEl.textContent = 'No pudimos sumarte. Intenta de nuevo.';
+			}
+		});
+	}
+</script>

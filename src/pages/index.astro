@@ -3,6 +3,7 @@
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
+import Waitlist from '../components/Waitlist.astro';
 import NewsCard from '../components/NewsCard.astro';
 import Donations from '../components/Donations.astro';
 import TrailerCard from '../components/TrailerCard.astro';
@@ -30,6 +31,8 @@ const preview = newestPropio
 
 <Layout title="GTA 6 Countdown" description="Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.">
 	<Hero />
+
+	<Waitlist />
 
 	<section id="trailers" class="mx-auto max-w-5xl px-4 pt-20">
 		<h2 class="text-2xl font-black uppercase mb-8">Trailers</h2>
@@ -85,6 +88,17 @@ const preview = newestPropio
 	import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 	gsap.registerPlugin(ScrollTrigger);
+
+	gsap.from('#waitlist', {
+		opacity: 0,
+		y: 32,
+		duration: 0.8,
+		ease: 'power2.out',
+		scrollTrigger: {
+			trigger: '#waitlist',
+			start: 'top 80%',
+		},
+	});
 
 	gsap.from('#trailers', {
 		opacity: 0,
