@@ -51,9 +51,11 @@ Un contador global compartido necesita escrituras atómicas. Las alternativas di
 
 | Archivo | Estado | Rol |
 |---|---|---|
-| `src/lib/waitlist.js` | nuevo | Lógica pura: validación de id y operaciones sobre una interfaz de store abstracta. Sin red, sin Astro, sin DOM. |
+| `src/lib/waitlist.js` | nuevo | Dominio puro: validación de id, operaciones sobre una interfaz de store abstracta y formato del contador. Sin red, sin Astro, sin DOM. |
 | `src/lib/waitlist.test.js` | nuevo | Vitest con un store en memoria. |
-| `src/pages/api/waitlist.ts` | nuevo | Endpoint on-demand. Cablea el cliente Upstash a la lógica pura. |
+| `src/lib/waitlist-http.js` | nuevo | `handleWaitlistRequest(request, store)`: todo el manejo de métodos, parseo, códigos y cabeceras. Recibe `Request`, devuelve `Response`. |
+| `src/lib/waitlist-http.test.js` | nuevo | Vitest con `Request` reales y un store en memoria. |
+| `src/pages/api/waitlist.ts` | nuevo | Endpoint on-demand. Lee las credenciales, construye el cliente Upstash y delega en `handleWaitlistRequest`. |
 | `src/components/Waitlist.astro` | nuevo | Markup y script de cliente. |
 | `astro.config.mjs` | modificado | Adapter de Vercel y schema de `astro:env`. |
 | `src/pages/index.astro` | modificado | Monta la sección y su animación de entrada. |
@@ -112,7 +114,7 @@ Cuerpo: `{ "id": "<uuid v4>" }`
 | Credenciales de Upstash ausentes en el entorno | 503 | `{ "error": "unavailable" }` |
 | Fallo de Upstash | 502 | `{ "error": "upstream" }` |
 
-El endpoint solo valida la forma del id y rechaza cuerpos mayores a 1 KB. Nada más, en coherencia con el alcance.
+El endpoint solo valida la forma del id y rechaza cuerpos de más de 1024 caracteres. Nada más, en coherencia con el alcance.
 
 ### Variables de entorno
 
@@ -202,9 +204,17 @@ Todo lo testeable vive acá, sin red ni dependencias de Astro. El store es una i
 | `isValidMemberId(id)` | `true` si `id` tiene forma de UUID v4. |
 | `joinWaitlist(store, id)` | Lanza si el id es inválido. Si no, devuelve `{ count, joined }`. |
 | `getCount(store)` | Devuelve el cardinal del set. |
-| `formatCount(n)` | Devuelve el texto ya listo para pintar, con separador de miles y la concordancia de número. |
+| `formatCount(n)` | Devuelve `{ value, label }`: el número con separador de miles y la etiqueta con la concordancia correcta. |
 
-`formatCount` usa `Intl.NumberFormat('es-CO')`, cuyo separador de miles es el punto: mil doscientos cuarenta y siete se escribe `1.247`, no `1,247`.
+`formatCount` devuelve las dos partes por separado porque la UI las pinta con estilos distintos —el número en `gta-outline`, la etiqueta en `gta-outline-soft`— y usa `Intl.NumberFormat('es-CO')`, cuyo separador de miles es el punto: mil doscientos cuarenta y siete se escribe `1.247`, no `1,247`.
+
+## Por qué el manejo HTTP vive en `src/lib/`
+
+El endpoint importa `astro:env/server`, un módulo virtual que solo existe dentro del pipeline de Astro. Vitest no lo resuelve, así que cualquier test que importe el endpoint falla al cargarlo, antes de ejecutar una sola aserción.
+
+Por eso el archivo bajo `src/pages/api/` se limita a leer las credenciales, construir el cliente y delegar: es tan delgado que no tiene nada que testear. Todo lo que sí puede romperse —métodos, parseo, validación, códigos de estado, cabeceras— vive en `src/lib/waitlist-http.js`, que solo depende de `Request`/`Response` estándar y se testea sin Astro de por medio.
+
+La alternativa sería un alias de `astro:env/server` en un `vitest.config.js` nuevo, y significaría mantener configuración de build para poder testear.
 
 ## Testing
 
@@ -218,7 +228,7 @@ Todo lo testeable vive acá, sin red ni dependencias de Astro. El store es una i
 - `getCount` sobre un store vacío devuelve `0`.
 - `formatCount` en 0, 1, 2 y 1247; el último confirma `1.247`, y el de 1 confirma el singular.
 
-**Endpoint:** se testea invocando su handler exportado con un `Request` real. Node 22 trae `Request` y `Response` globales, así que no hace falta levantar un servidor. Cubre método no soportado, JSON malformado, cuerpo sin `id` y ausencia de credenciales.
+**`src/lib/waitlist-http.test.js`**, invocando `handleWaitlistRequest` con `Request` reales. Node 22 trae `Request` y `Response` globales, así que no hace falta levantar un servidor. Cubre: `GET` devuelve el conteo con su `Cache-Control`, `POST` válido, `POST` repetido con el mismo id, JSON malformado, cuerpo sin `id`, método no soportado, ausencia de credenciales (503) y fallo del store (502).
 
 **Verificación manual:**
 
