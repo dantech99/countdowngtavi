@@ -138,8 +138,8 @@ El endpoint solo valida la forma del id y rechaza cuerpos de más de 1024 caract
 
 Se declaran en el schema de `astro:env` dentro de `astro.config.mjs`, con `context: 'server'` y `access: 'secret'`:
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
 
 **Ambas se declaran opcionales.** Si fueran requeridas, cualquier build sin ellas —un clon nuevo, un CI— fallaría antes de compilar. Siendo opcionales, el build pasa y es el endpoint el que responde 503, que es el comportamiento de error ya definido arriba.
 

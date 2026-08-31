@@ -12,8 +12,8 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 
 La lista de espera (`/api/waitlist`) necesita un store de Upstash Redis:
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
 
 Ambas se provisionan desde el Vercel Marketplace (`vercel integration add`), que las inyecta automáticamente en el entorno de Vercel. Para desarrollo local, cópialas a un `.env` (ya está en `.gitignore`) desde el dashboard de Upstash o con `vercel env pull`. Ver `.env.example` para los nombres exactos.
 

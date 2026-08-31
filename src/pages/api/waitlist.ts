@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { Redis } from '@upstash/redis';
-import { UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN } from 'astro:env/server';
+import { KV_REST_API_URL, KV_REST_API_TOKEN } from 'astro:env/server';
 import { handleWaitlistRequest } from '../../lib/waitlist-http.js';
 
 // The only route in the project that is not prerendered.
@@ -10,8 +10,8 @@ export const prerender = false;
 // speaks HTTP, so there is no connection to open, keep alive, or tear down.
 // Missing credentials leave it null, which the handler turns into a 503.
 const store =
-  UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({ url: UPSTASH_REDIS_REST_URL, token: UPSTASH_REDIS_REST_TOKEN })
+  KV_REST_API_URL && KV_REST_API_TOKEN
+    ? new Redis({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN })
     : null;
 
 // ALL rather than separate GET/POST exports: it lets the handler answer 405
