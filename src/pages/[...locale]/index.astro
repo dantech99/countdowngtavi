@@ -53,6 +53,7 @@ const preview = newestPropio
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 			{trailers.map((trailer) => (
 				<TrailerCard
+					lang={lang}
 					href={watchUrl(trailer.id)}
 					label={trailer.label}
 					title={trailer.title}
@@ -69,6 +70,7 @@ const preview = newestPropio
 			{preview.map((entry) =>
 				entry.kind === 'propio' ? (
 					<NewsCard
+						lang={lang}
 						variant="propio"
 						title={entry.entry.data.title}
 						description={entry.entry.data.description}
@@ -79,6 +81,7 @@ const preview = newestPropio
 					/>
 				) : (
 					<NewsCard
+						lang={lang}
 						variant="agregado"
 						title={entry.item.title}
 						href={entry.item.link}

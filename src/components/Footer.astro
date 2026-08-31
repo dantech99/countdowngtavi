@@ -1,17 +1,21 @@
 ---
 // src/components/Footer.astro
+import { getLangFromUrl, localizePath, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 const year = new Date().getFullYear();
 ---
 
 <footer class="border-t border-white/10 px-4 py-8 text-center text-sm text-white/50">
-	<p>© {year} GTA 6 Countdown. No afiliado con Rockstar Games o Take-Two Interactive.</p>
+	<p>© {year} {t('site.name')}. {t('footer.disclaimer')}</p>
 	<p class="mt-2">
-		<a href="/" class="underline hover:text-white">Inicio</a>
+		<a href={localizePath(lang, '/')} class="underline hover:text-white">{t('nav.home')}</a>
 		<span class="mx-2">·</span>
-		<a href="/noticias" class="underline hover:text-white">Noticias</a>
+		<a href={localizePath(lang, '/noticias')} class="underline hover:text-white">{t('nav.news')}</a>
 		<span class="mx-2">·</span>
-		<a href="/#waitlist" class="underline hover:text-white">Lista de espera</a>
+		<a href={`${localizePath(lang, '/')}#waitlist`} class="underline hover:text-white">{t('nav.waitlist')}</a>
 		<span class="mx-2">·</span>
-		<a href="#donaciones" class="underline hover:text-white">Donaciones</a>
+		<a href="#donaciones" class="underline hover:text-white">{t('nav.donations')}</a>
 	</p>
 </footer>

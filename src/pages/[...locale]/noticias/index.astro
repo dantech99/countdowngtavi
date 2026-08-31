@@ -34,6 +34,7 @@ const rest = merged.slice(INITIAL_COUNT);
 			{visible.map((entry) =>
 				entry.kind === 'propio' ? (
 					<NewsCard
+						lang={lang}
 						variant="propio"
 						title={entry.entry.data.title}
 						description={entry.entry.data.description}
@@ -44,6 +45,7 @@ const rest = merged.slice(INITIAL_COUNT);
 					/>
 				) : (
 					<NewsCard
+						lang={lang}
 						variant="agregado"
 						title={entry.item.title}
 						href={entry.item.link}
@@ -61,6 +63,7 @@ const rest = merged.slice(INITIAL_COUNT);
 					{rest.map((entry) =>
 						entry.kind === 'propio' ? (
 							<NewsCard
+						lang={lang}
 								variant="propio"
 								title={entry.entry.data.title}
 								description={entry.entry.data.description}
@@ -71,6 +74,7 @@ const rest = merged.slice(INITIAL_COUNT);
 							/>
 						) : (
 							<NewsCard
+						lang={lang}
 								variant="agregado"
 								title={entry.item.title}
 								href={entry.item.link}

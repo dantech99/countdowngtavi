@@ -2,13 +2,17 @@
 // src/components/Hero.astro
 import { Image } from 'astro:assets';
 import heroBg from '../assets/background-gta6.png';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 ---
 
 <section id="hero" class="relative h-screen w-full overflow-hidden flex items-center justify-center text-center">
 	<Image
 		id="hero-bg"
 		src={heroBg}
-		alt="Arte de fondo de GTA VI"
+		alt={t('hero.bgAlt')}
 		class="absolute -top-[10%] left-0 h-[115%] w-full object-cover will-change-transform sm:-top-[30%] sm:h-[140%]"
 		loading="eager"
 		fetchpriority="high"
@@ -19,31 +23,30 @@ import heroBg from '../assets/background-gta6.png';
 
 	<div id="hero-content" class="relative z-10 flex flex-col items-center gap-6 px-4 will-change-transform">
 		<h1 class="gta-outline text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-wide">
-			Cuenta regresiva a GTA VI
+			{t('hero.title')}
 		</h1>
 
 		<div class="flex gap-4 sm:gap-8" data-countdown data-target="2026-11-19T00:00:00">
 			<div class="flex flex-col items-center">
 				<span class="gta-outline text-4xl sm:text-6xl font-black tabular-nums" data-unit="days">--</span>
-				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">Días</span>
+				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">{t('hero.days')}</span>
 			</div>
 			<div class="flex flex-col items-center">
 				<span class="gta-outline text-4xl sm:text-6xl font-black tabular-nums" data-unit="hours">--</span>
-				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">Horas</span>
+				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">{t('hero.hours')}</span>
 			</div>
 			<div class="flex flex-col items-center">
 				<span class="gta-outline text-4xl sm:text-6xl font-black tabular-nums" data-unit="minutes">--</span>
-				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">Minutos</span>
+				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">{t('hero.minutes')}</span>
 			</div>
 			<div class="flex flex-col items-center">
 				<span class="gta-outline text-4xl sm:text-6xl font-black tabular-nums" data-unit="seconds">--</span>
-				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">Segundos</span>
+				<span class="gta-outline-soft text-xs sm:text-sm uppercase tracking-widest text-white/80">{t('hero.seconds')}</span>
 			</div>
 		</div>
 
 		<p class="max-w-md text-xs sm:text-sm text-white/80">
-			Rockstar solo confirmó la fecha de lanzamiento, no la hora exacta de desbloqueo.
-			El contador asume medianoche hora local.
+			{t('hero.disclaimer')}
 		</p>
 	</div>
 

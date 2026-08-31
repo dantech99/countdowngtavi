@@ -2,7 +2,11 @@ export const MEMBERS_KEY = 'waitlist:members';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const COUNT_FORMAT = new Intl.NumberFormat('es-CO');
+// Un formateador por idioma: el separador de miles cambia (1.234 vs 1,234).
+const COUNT_FORMATS = {
+  es: new Intl.NumberFormat('es-CO'),
+  en: new Intl.NumberFormat('en-US'),
+};
 
 export function isValidMemberId(id) {
   return typeof id === 'string' && UUID_V4.test(id);
@@ -27,11 +31,15 @@ export async function joinWaitlist(store, id) {
   return { count, joined: added === 1 };
 }
 
+// Las etiquetas llegan como parámetro, no desde el diccionario: este módulo es
+// una librería y no debe depender de la capa de UI. Quien lo llama las lee de
+// los atributos data-* que el componente renderizó.
 // Returned in two pieces because the section styles them differently: the
 // number carries the GTA outline, the caption the softer variant.
-export function formatCount(n) {
+export function formatCount(n, lang, labels) {
+  const format = COUNT_FORMATS[lang] ?? COUNT_FORMATS.es;
   return {
-    value: COUNT_FORMAT.format(n),
-    label: n === 1 ? 'persona ya se sumó' : 'personas ya se sumaron',
+    value: format.format(n),
+    label: n === 1 ? labels.one : labels.other,
   };
 }

@@ -1,6 +1,7 @@
 ---
 // src/components/NewsCard.astro
 import { Image } from 'astro:assets';
+import type { Lang } from '../i18n/ui';
 
 interface PropioProps {
 	variant: 'propio';
@@ -10,6 +11,7 @@ interface PropioProps {
 	coverSrc: ImageMetadata;
 	coverAlt: string;
 	pubDate: Date;
+	lang: Lang;
 }
 
 interface AgregadoProps {
@@ -19,15 +21,16 @@ interface AgregadoProps {
 	source: string;
 	pubDate: Date | null;
 	image?: string | null;
+	lang: Lang;
 }
 
 type Props = PropioProps | AgregadoProps;
 
 const props = Astro.props;
 
-function formatDate(date: Date | null, dateOnly = false) {
+function formatDate(date: Date | null, lang: Lang, dateOnly = false) {
 	if (!date) return '';
-	return date.toLocaleDateString('es', {
+	return date.toLocaleDateString(lang, {
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric',
@@ -65,7 +68,7 @@ const cardBase =
 				/>
 			</div>
 			<div class="p-4">
-				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate, true)}</p>
+				<p class="text-xs uppercase tracking-wide text-white/50">{formatDate(props.pubDate, props.lang, true)}</p>
 				<h3 class="mt-1 text-lg font-bold leading-snug text-balance">{props.title}</h3>
 				<p class="mt-2 text-sm text-white/70">{props.description}</p>
 			</div>
@@ -91,7 +94,7 @@ const cardBase =
 			)}
 			<div class="p-4">
 				<p class="text-xs uppercase tracking-wide text-white/50">
-					{props.source} · {formatDate(props.pubDate)}
+					{props.source} · {formatDate(props.pubDate, props.lang)}
 				</p>
 				<h3 class="mt-1 text-base font-semibold leading-snug text-balance">{props.title}</h3>
 			</div>

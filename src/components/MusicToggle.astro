@@ -1,13 +1,21 @@
 ---
 // src/components/MusicToggle.astro
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 ---
 
 <button
 	id="music-toggle"
 	type="button"
 	aria-pressed="false"
-	aria-label="Activar música ambiental"
-	title="Música ambiental"
+	aria-label={t('music.enable')}
+	title={t('music.title')}
+	data-label-enable={t('music.enable')}
+	data-label-mute={t('music.mute')}
+	data-label-on={t('music.on')}
+	data-label-off={t('music.off')}
 	class="group fixed bottom-5 right-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white/80 backdrop-blur transition-colors hover:border-gta-pink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:border-gta-pink aria-pressed:text-white"
 >
 	<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -18,7 +26,7 @@
 			<path d="M18.5 6a9 9 0 0 1 0 12" />
 		</g>
 	</svg>
-	<span class="sr-only" data-music-label>Música apagada</span>
+	<span class="sr-only" data-music-label>{t('music.off')}</span>
 </button>
 
 <script>
@@ -32,15 +40,24 @@
 		const onIcon = button.querySelector('[data-music-on]') as SVGElement;
 		const label = button.querySelector('[data-music-label]') as HTMLElement;
 
+		// Igual que en Waitlist: el <script> no ve el frontmatter, así que los
+		// textos viajan por atributos data-* del propio botón.
+		const text = {
+			enable: button.dataset.labelEnable!,
+			mute: button.dataset.labelMute!,
+			on: button.dataset.labelOn!,
+			off: button.dataset.labelOff!,
+		};
+
 		let music: ReturnType<typeof createAmbientMusic> | null = null;
 		let context: AudioContext | null = null;
 
 		function render(playing: boolean) {
 			button!.setAttribute('aria-pressed', String(playing));
-			button!.setAttribute('aria-label', playing ? 'Silenciar música ambiental' : 'Activar música ambiental');
+			button!.setAttribute('aria-label', playing ? text.mute : text.enable);
 			offIcon.classList.toggle('hidden', playing);
 			onIcon.classList.toggle('hidden', !playing);
-			label.textContent = playing ? 'Música encendida' : 'Música apagada';
+			label.textContent = playing ? text.on : text.off;
 		}
 
 		function remember(playing: boolean) {

@@ -84,17 +84,29 @@ describe('joinWaitlist', () => {
 });
 
 describe('formatCount', () => {
+  const es = { one: 'persona ya se sumó', other: 'personas ya se sumaron' };
+  const en = { one: 'person has joined', other: 'people have joined' };
+
   it('uses the singular for one member', () => {
-    expect(formatCount(1)).toEqual({ value: '1', label: 'persona ya se sumó' });
+    expect(formatCount(1, 'es', es)).toEqual({ value: '1', label: 'persona ya se sumó' });
+    expect(formatCount(1, 'en', en)).toEqual({ value: '1', label: 'person has joined' });
   });
 
   it('uses the plural for zero and for many', () => {
-    expect(formatCount(0)).toEqual({ value: '0', label: 'personas ya se sumaron' });
-    expect(formatCount(2)).toEqual({ value: '2', label: 'personas ya se sumaron' });
+    expect(formatCount(0, 'es', es).label).toBe('personas ya se sumaron');
+    expect(formatCount(2, 'es', es).label).toBe('personas ya se sumaron');
+    expect(formatCount(0, 'en', en).label).toBe('people have joined');
   });
 
-  // es-CO groups thousands with a period, not a comma.
-  it('groups thousands the Colombian way', () => {
-    expect(formatCount(1247).value).toBe('1.247');
+  // es-CO groups thousands with a period, en-US with a comma.
+  it('groups thousands the way each locale does', () => {
+    expect(formatCount(1247, 'es', es).value).toBe('1.247');
+    expect(formatCount(1247, 'en', en).value).toBe('1,247');
+  });
+
+  // El idioma llega de un atributo data-* del DOM, así que un valor
+  // inesperado no debe romper el contador.
+  it('falls back to the default locale for an unknown code', () => {
+    expect(formatCount(1247, 'zz', es).value).toBe('1.247');
   });
 });

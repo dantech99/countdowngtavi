@@ -1,15 +1,27 @@
 ---
 // src/components/Waitlist.astro
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
 ---
 
 <section id="waitlist" class="mx-auto max-w-2xl px-4 py-20 text-center">
-	<h2 class="text-2xl font-black uppercase">Súmate al lanzamiento</h2>
-	<p class="mt-4 text-white/70">Marca que vas a estar el día uno. Sin email, sin registro.</p>
+	<h2 class="text-2xl font-black uppercase">{t('waitlist.heading')}</h2>
+	<p class="mt-4 text-white/70">{t('waitlist.sub')}</p>
 
-	<div class="mt-8" data-waitlist-count aria-live="polite" hidden>
+	<div
+		class="mt-8"
+		data-waitlist-count
+		data-lang={lang}
+		data-count-one={t('waitlist.countOne')}
+		data-count-other={t('waitlist.countOther')}
+		aria-live="polite"
+		hidden
+	>
 		<p class="gta-outline text-5xl font-black tabular-nums" data-waitlist-value>—</p>
 		<p class="gta-outline-soft mt-1 text-xs uppercase tracking-widest text-white/80" data-waitlist-label>
-			personas ya se sumaron
+			{t('waitlist.countOther')}
 		</p>
 	</div>
 
@@ -17,10 +29,14 @@
 		id="waitlist-button"
 		type="button"
 		data-state="idle"
+		data-label-idle={t('waitlist.cta')}
+		data-label-sending={t('waitlist.sending')}
+		data-label-joined={t('waitlist.joined')}
+		data-label-error={t('waitlist.error')}
 		disabled
 		class="mt-8 rounded-full border border-white/20 px-8 py-3 text-sm font-black uppercase tracking-wide transition-colors hover:border-gta-pink hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed data-[state=joined]:border-gta-pink"
 	>
-		Me sumo
+		{t('waitlist.cta')}
 	</button>
 
 	<p class="mt-4 h-5 text-sm text-white/60" role="status" data-waitlist-error></p>
@@ -50,6 +66,17 @@
 		const valueEl = section.querySelector('[data-waitlist-value]') as HTMLElement;
 		const labelEl = section.querySelector('[data-waitlist-label]') as HTMLElement;
 		const errorEl = section.querySelector('[data-waitlist-error]') as HTMLElement;
+
+		// Los textos vienen del DOM porque un <script> de Astro no puede importar
+		// del frontmatter donde vive el diccionario.
+		const labels = {
+			idle: button.dataset.labelIdle!,
+			sending: button.dataset.labelSending!,
+			joined: button.dataset.labelJoined!,
+			error: button.dataset.labelError!,
+		};
+		const lang = counter.dataset.lang!;
+		const countLabels = { one: counter.dataset.countOne!, other: counter.dataset.countOther! };
 
 		// Same treatment the countdown gives its digits, and the same guard the
 		// hero uses for its parallax: matchMedia keeps the motion off for anyone
@@ -99,15 +126,14 @@
 		function render(state: 'idle' | 'sending' | 'joined') {
 			button!.dataset.state = state;
 			button!.disabled = state !== 'idle';
-			button!.textContent =
-				state === 'sending' ? 'Sumándote…' : state === 'joined' ? 'Ya estás dentro ✓' : 'Me sumo';
+			button!.textContent = labels[state];
 		}
 
 		function showCount(count: unknown) {
 			// A misbehaving endpoint should not render NaN: leave the counter in
 			// whatever state it was already in.
 			if (typeof count !== 'number' || !Number.isFinite(count)) return;
-			const { value, label } = formatCount(count);
+			const { value, label } = formatCount(count, lang, countLabels);
 			valueEl.textContent = value;
 			labelEl.textContent = label;
 			counter.hidden = false;
@@ -161,7 +187,7 @@
 				// click reuses it instead of minting a new one — the count still
 				// cannot drift.
 				render('idle');
-				errorEl.textContent = 'No pudimos sumarte. Intenta de nuevo.';
+				errorEl.textContent = labels.error;
 			}
 		});
 	}
