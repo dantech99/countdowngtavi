@@ -8,6 +8,17 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+## Variables de entorno
+
+La lista de espera (`/api/waitlist`) necesita un store de Upstash Redis:
+
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+
+Ambas se provisionan desde el Vercel Marketplace (`vercel integration add`), que las inyecta automáticamente en el entorno de Vercel. Para desarrollo local, cópialas a un `.env` (ya está en `.gitignore`) desde el dashboard de Upstash o con `vercel env pull`. Ver `.env.example` para los nombres exactos.
+
+Ambas están declaradas como opcionales en el schema de `astro:env` (`astro.config.mjs`), así que un clon nuevo sin `.env` sigue compilando. En ese caso `/api/waitlist` responde `503 { "error": "unavailable" }` en cualquier método: es el comportamiento esperado, no un error, y desaparece en cuanto las dos variables están presentes.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
