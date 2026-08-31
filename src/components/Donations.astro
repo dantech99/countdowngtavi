@@ -5,50 +5,34 @@ import { getLangFromUrl, useTranslations } from '../i18n/utils';
 const lang = getLangFromUrl(Astro.url.pathname);
 const t = useTranslations(lang);
 
-// Botón de donaciones alojado en PayPal (Herramientas > Donaciones).
-const hostedButtonId = 'W9TZC67SG35G4';
-
-// PayPal sirve el arte del botón por locale; el texto va dentro de la imagen.
-const buttonImage =
-	lang === 'en'
-		? 'https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif'
-		: 'https://www.paypalobjects.com/es_ES/i/btn/btn_donateCC_LG.gif';
+// Botón de donaciones alojado en PayPal (Herramientas > Donaciones). El SDK
+// `donate-sdk.js` solo sirve para inyectar el arte azul de PayPal, que no pega
+// con la paleta del sitio: enlazamos al mismo destino y ponemos nuestro estilo.
+const donateUrl = 'https://www.paypal.com/donate/?hosted_button_id=W9TZC67SG35G4';
 ---
 
 <section id="donaciones" class="mx-auto max-w-2xl px-4 py-20 text-center">
 	<h2 class="text-2xl font-black uppercase">{t('donations.heading')}</h2>
 	<p class="mt-4 text-white/70">{t('donations.body')}</p>
 	<div class="mt-8 flex justify-center">
-		<div
-			id="donate-button"
-			data-button-id={hostedButtonId}
-			data-image-src={buttonImage}
-			data-image-alt={t('donations.cta')}
+		<a
+			href={donateUrl}
+			target="_blank"
+			rel="noopener noreferrer"
+			class="group inline-flex items-center gap-3 rounded-full bg-gta-pink px-8 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-gta-pink/20 transition-transform duration-200 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
 		>
-		</div>
+			<svg
+				class="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
+				viewBox="0 0 24 24"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				<path
+					d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"
+				></path>
+			</svg>
+			{t('donations.cta')}
+		</a>
 	</div>
+	<p class="mt-4 text-xs uppercase tracking-wide text-white/40">{t('donations.secure')}</p>
 </section>
-
-{/* is:inline en ambos: el SDK expone el global `PayPal` y Astro, sin la
-directiva, convertiría el script de abajo en un módulo diferido que correría
-antes de que ese global exista. */}
-<script
-	is:inline
-	src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js"
-	charset="UTF-8"></script>
-<script is:inline>
-	(function () {
-		var el = document.getElementById('donate-button');
-		if (!el || typeof PayPal === 'undefined') return;
-
-		PayPal.Donation.Button({
-			env: 'production',
-			hosted_button_id: el.dataset.buttonId,
-			image: {
-				src: el.dataset.imageSrc,
-				alt: el.dataset.imageAlt,
-				title: el.dataset.imageAlt,
-			},
-		}).render('#donate-button');
-	})();
-</script>
