@@ -20,11 +20,16 @@ const translations = buildTranslationIndex(await getCollection('articulos'));
 	class="fixed inset-x-0 top-0 z-40 border-b border-transparent transition-colors duration-300"
 >
 	<nav class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-		<a
-			href={localizePath(lang, '/')}
-			class="gta-outline-soft text-sm font-black uppercase tracking-wide hover:text-white"
-		>
-			{t('site.name')}
+		<a href={localizePath(lang, '/')} class="flex items-center gap-2 hover:text-white">
+			<span
+				class="gta-outline-soft text-xl font-black uppercase leading-none"
+				aria-hidden="true"
+			>
+				VI
+			</span>
+			<span class="gta-outline-soft text-sm font-black uppercase tracking-wide">
+				{t('site.name')}
+			</span>
 		</a>
 
 		<a
