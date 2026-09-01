@@ -1,0 +1,46 @@
+---
+// src/pages/[...locale]/privacidad.astro
+import Layout from '../../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import { DEFAULT_LANG, LANGS } from '../../i18n/ui';
+
+// Misma URL en los dos idiomas (/privacidad, /en/privacidad): el proyecto ya
+// hace lo mismo con /noticias en vez de /en/news.
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({
+		params: { locale: lang === DEFAULT_LANG ? undefined : lang },
+	}));
+}
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const t = useTranslations(lang);
+---
+
+<Layout title={t('privacy.title')} description={t('privacy.description')}>
+	<article class="mx-auto max-w-2xl px-4 pt-24 pb-16">
+		<h1 class="text-3xl font-black">{t('privacy.heading')}</h1>
+		<p class="mt-2 text-xs uppercase tracking-wide text-white/50">{t('privacy.updated')}</p>
+
+		<p class="prose prose-invert mt-8 max-w-none text-white/80">{t('privacy.intro')}</p>
+
+		<section class="mt-8">
+			<h2 class="text-xl font-bold">{t('privacy.waitlistHeading')}</h2>
+			<p class="prose prose-invert mt-2 max-w-none text-white/80">{t('privacy.waitlistBody')}</p>
+		</section>
+
+		<section class="mt-8">
+			<h2 class="text-xl font-bold">{t('privacy.adsHeading')}</h2>
+			<p class="prose prose-invert mt-2 max-w-none text-white/80">{t('privacy.adsBody')}</p>
+		</section>
+
+		<section class="mt-8">
+			<h2 class="text-xl font-bold">{t('privacy.analyticsHeading')}</h2>
+			<p class="prose prose-invert mt-2 max-w-none text-white/80">{t('privacy.analyticsBody')}</p>
+		</section>
+
+		<section class="mt-8">
+			<h2 class="text-xl font-bold">{t('privacy.donationsHeading')}</h2>
+			<p class="prose prose-invert mt-2 max-w-none text-white/80">{t('privacy.donationsBody')}</p>
+		</section>
+	</article>
+</Layout>

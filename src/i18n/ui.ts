@@ -10,8 +10,9 @@ export type Lang = (typeof LANGS)[number];
 const es = {
 	'site.name': 'GTA 6 Countdown',
 
-	'home.title': 'GTA 6 Countdown',
-	'home.description': 'Cuenta regresiva al lanzamiento de GTA VI, noticias y comunidad.',
+	'home.title': 'GTA 6 Countdown: Cuenta Regresiva y Fecha de Lanzamiento',
+	'home.description':
+		'Cuenta regresiva en tiempo real al lanzamiento de GTA VI, el 19 de noviembre de 2026. Últimas noticias, trailers y una comunidad esperando el día uno.',
 
 	'hero.title': 'Cuenta regresiva a GTA VI',
 	'hero.bgAlt': 'Arte de fondo de GTA VI',
@@ -47,12 +48,32 @@ const es = {
 	'donations.cta': 'Donar con PayPal',
 	'donations.secure': 'Pago seguro procesado por PayPal',
 
+	'privacy.title': 'Privacidad — GTA 6 Countdown',
+	'privacy.heading': 'Política de privacidad',
+	'privacy.description': 'Qué datos recolecta GTA 6 Countdown y cómo los usamos.',
+	'privacy.updated': 'Última actualización: 1 de septiembre de 2026',
+	'privacy.intro':
+		'Este sitio es un proyecto de fans, sin afiliación con Rockstar Games. Esta página explica qué datos recolectamos y para qué.',
+	'privacy.waitlistHeading': 'Lista de espera',
+	'privacy.waitlistBody':
+		'Sumarte no pide email ni registro: el botón genera un identificador aleatorio en tu navegador (localStorage) que solo sirve para contar cuánta gente se sumó y evitar que un mismo visitante cuente dos veces. Ese identificador no está asociado a tu nombre, email o cualquier otro dato personal.',
+	'privacy.adsHeading': 'Publicidad',
+	'privacy.adsBody':
+		'Mostramos anuncios de Google AdSense, que puede usar cookies para personalizar los anuncios que ves. Puedes revisar y ajustar esas preferencias en la configuración de anuncios de Google.',
+	'privacy.analyticsHeading': 'Analítica',
+	'privacy.analyticsBody':
+		'Usamos Vercel Analytics para entender cuánta gente visita el sitio. Es una analítica sin cookies que no identifica visitantes individuales.',
+	'privacy.donationsHeading': 'Donaciones',
+	'privacy.donationsBody':
+		'El botón de donaciones te lleva directo a PayPal: nosotros no vemos ni guardamos ningún dato de pago.',
+
 	'footer.disclaimer': 'No afiliado con Rockstar Games o Take-Two Interactive.',
 
 	'nav.home': 'Inicio',
 	'nav.news': 'Noticias',
 	'nav.waitlist': 'Lista de espera',
 	'nav.donations': 'Donaciones',
+	'nav.privacy': 'Privacidad',
 
 	'music.enable': 'Activar música ambiental',
 	'music.mute': 'Silenciar música ambiental',
@@ -68,8 +89,9 @@ export type UIKey = keyof typeof es;
 const en = {
 	'site.name': 'GTA 6 Countdown',
 
-	'home.title': 'GTA 6 Countdown',
-	'home.description': 'Countdown to the GTA VI release, news and community.',
+	'home.title': 'GTA 6 Countdown: Release Date & Countdown Timer',
+	'home.description':
+		'Real-time countdown to the GTA VI release on November 19, 2026. Latest news, trailers, and a community counting down to day one.',
 
 	'hero.title': 'GTA VI Countdown',
 	'hero.bgAlt': 'GTA VI background art',
@@ -105,12 +127,32 @@ const en = {
 	'donations.cta': 'Donate with PayPal',
 	'donations.secure': 'Secure payment processed by PayPal',
 
+	'privacy.title': 'Privacy — GTA 6 Countdown',
+	'privacy.heading': 'Privacy Policy',
+	'privacy.description': 'What data GTA 6 Countdown collects and how we use it.',
+	'privacy.updated': 'Last updated: September 1, 2026',
+	'privacy.intro':
+		'This site is a fan project, not affiliated with Rockstar Games. This page explains what data we collect and why.',
+	'privacy.waitlistHeading': 'Waitlist',
+	'privacy.waitlistBody':
+		"Joining doesn't ask for an email or signup: the button generates a random identifier in your browser (localStorage) that's only used to count how many people joined and to stop the same visitor from counting twice. That identifier isn't tied to your name, email, or any other personal data.",
+	'privacy.adsHeading': 'Advertising',
+	'privacy.adsBody':
+		"We show ads through Google AdSense, which may use cookies to personalize the ads you see. You can review and adjust those preferences in Google's ad settings.",
+	'privacy.analyticsHeading': 'Analytics',
+	'privacy.analyticsBody':
+		"We use Vercel Analytics to understand how many people visit the site. It's cookie-free analytics that doesn't identify individual visitors.",
+	'privacy.donationsHeading': 'Donations',
+	'privacy.donationsBody':
+		'The donate button takes you straight to PayPal: we never see or store any payment data.',
+
 	'footer.disclaimer': 'Not affiliated with Rockstar Games or Take-Two Interactive.',
 
 	'nav.home': 'Home',
 	'nav.news': 'News',
 	'nav.waitlist': 'Waitlist',
 	'nav.donations': 'Donations',
+	'nav.privacy': 'Privacy',
 
 	'music.enable': 'Turn on ambient music',
 	'music.mute': 'Mute ambient music',
