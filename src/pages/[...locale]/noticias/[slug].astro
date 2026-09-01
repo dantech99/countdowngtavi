@@ -28,9 +28,28 @@ const { Content } = await render(entry);
 
 const lang = getLangFromUrl(Astro.url.pathname);
 const t = useTranslations(lang);
+
+const articleSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'Article',
+	headline: entry.data.title,
+	description: entry.data.description,
+	image: new URL(entry.data.cover.src, Astro.site).href,
+	datePublished: entry.data.pubDate.toISOString(),
+	author: { '@type': 'Organization', name: entry.data.author },
+	inLanguage: lang,
+	mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).href,
+};
 ---
 
-<Layout title={`${entry.data.title} — ${t('site.name')}`} description={entry.data.description}>
+<Layout
+	title={`${entry.data.title} — ${t('site.name')}`}
+	description={entry.data.description}
+	image={entry.data.cover}
+	type="article"
+>
+	<script type="application/ld+json" is:inline set:html={JSON.stringify(articleSchema)} />
+
 	<article class="mx-auto max-w-3xl px-4 pt-24 pb-16">
 		<p class="text-xs uppercase tracking-wide text-white/50">
 			{entry.data.author} · {entry.data.pubDate.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}

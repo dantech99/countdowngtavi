@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import vercel from '@astrojs/vercel';
+import sitemap from '@astrojs/sitemap';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -9,6 +10,8 @@ export default defineConfig({
   adapter: vercel(),
 
   site: 'https://countdowngtavi.com',
+
+  integrations: [sitemap()],
 
   // Declara los locales ante el framework. La generación de rutas es manual,
   // vía el rest param [...locale] de src/pages, y el idioma se deriva con

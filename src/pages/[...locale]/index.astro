@@ -24,6 +24,15 @@ export function getStaticPaths() {
 const lang = getLangFromUrl(Astro.url.pathname);
 const t = useTranslations(lang);
 
+const websiteSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'WebSite',
+	name: t('site.name'),
+	url: new URL(Astro.url.pathname, Astro.site).href,
+	description: t('home.description'),
+	inLanguage: lang,
+};
+
 const trailers = getLatestTrailers(2);
 const aggregated = await fetchAggregated();
 const articulos = byLang(await getCollection('articulos'), lang);
@@ -44,6 +53,8 @@ const preview = newestPropio
 ---
 
 <Layout title={t('home.title')} description={t('home.description')}>
+	<script type="application/ld+json" is:inline set:html={JSON.stringify(websiteSchema)} />
+
 	<Hero />
 
 	<Waitlist />
