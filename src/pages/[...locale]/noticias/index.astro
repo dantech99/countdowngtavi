@@ -3,7 +3,7 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../../layouts/Layout.astro';
 import NewsCard from '../../../components/NewsCard.astro';
-import { fetchAggregated, mergeNews } from '../../../lib/news.js';
+import { fetchAggregated, forLang, mergeNews } from '../../../lib/news.js';
 import { articleSlug, byLang } from '../../../lib/articulos.js';
 import { getLangFromUrl, localizePath, useTranslations } from '../../../i18n/utils';
 import { DEFAULT_LANG, LANGS } from '../../../i18n/ui';
@@ -17,7 +17,7 @@ export function getStaticPaths() {
 const lang = getLangFromUrl(Astro.url.pathname);
 const t = useTranslations(lang);
 
-const aggregated = await fetchAggregated();
+const aggregated = forLang(await fetchAggregated(), lang);
 const articulos = byLang(await getCollection('articulos'), lang);
 const merged = mergeNews(articulos, aggregated);
 
