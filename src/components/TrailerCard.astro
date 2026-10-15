@@ -33,16 +33,16 @@ const t = useTranslations(lang);
 	<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/25"></div>
 
 	<div class="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
-		<span class="grid h-16 w-16 place-items-center rounded-full bg-white/95 shadow-lg transition-transform duration-300 group-hover:scale-110 sm:h-20 sm:w-20">
-			<svg viewBox="0 0 24 24" class="ml-1 h-7 w-7 fill-black sm:h-8 sm:w-8" aria-hidden="true">
+		<span class="grid h-16 w-16 place-items-center rounded-full bg-white/95 shadow-lg transition-transform duration-300 group-hover:scale-110 sm:h-20 sm:w-20 md:h-14 md:w-14 lg:h-20 lg:w-20">
+			<svg viewBox="0 0 24 24" class="ml-1 h-7 w-7 fill-black sm:h-8 sm:w-8 md:h-6 md:w-6 lg:h-8 lg:w-8" aria-hidden="true">
 				<path d="M8 5.5v13l11-6.5z" />
 			</svg>
 		</span>
 	</div>
 
-	<div class="absolute inset-x-0 bottom-0 p-5 text-center sm:p-7">
+	<div class="absolute inset-x-0 bottom-0 p-5 text-center sm:p-7 md:p-4 lg:p-6">
 		<p class="text-xs font-bold uppercase tracking-[0.35em] text-white/80">{t('trailers.watch')}</p>
-		<p class="mt-1 text-2xl font-black uppercase tracking-tight text-[#ffe9a8] sm:text-4xl">
+		<p class="mt-1 text-balance text-2xl font-black uppercase tracking-tight text-[#ffe9a8] sm:text-4xl md:text-xl lg:text-3xl">
 			{label}
 		</p>
 	</div>
