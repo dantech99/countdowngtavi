@@ -9,6 +9,13 @@
  */
 export const TRAILERS = [
   {
+    id: 'rz1B4B2yBZY',
+    label: 'Launch Trailer',
+    title: 'Grand Theft Auto VI: Launch Trailer',
+    publishedAt: '2026-10-15',
+    poster: 'neon',
+  },
+  {
     id: 'tJbzMqJGH4k',
     label: 'An Extended Look',
     title: 'Grand Theft Auto VI: An Extended Look',
