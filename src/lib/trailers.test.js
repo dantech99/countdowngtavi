@@ -11,7 +11,7 @@ describe('getLatestTrailers', () => {
   it('returns the newest trailers first', () => {
     const trailers = [
       { id: 'old', publishedAt: '2023-12-04' },
-      { id: 'new', publishedAt: '2026-08-28' },
+      { id: 'new', publishedAt: '2026-10-15' },
       { id: 'mid', publishedAt: '2025-05-06' },
     ];
     expect(getLatestTrailers(2, trailers).map((t) => t.id)).toEqual(['new', 'mid']);
