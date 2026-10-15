@@ -45,24 +45,36 @@ export function extractImage(item) {
   return match ? upsizeThumbnail(match[1]) : null;
 }
 
-export function normalizeFeedItem(item, source) {
+// rss-parser hands categories back as strings, but some feeds ship objects
+// (`{ _: 'GTA 6', $: {...} }`), so coerce defensively.
+function normalizeCategories(categories) {
+  if (!Array.isArray(categories)) return [];
+  return categories
+    .map((category) => (typeof category === 'string' ? category : category?._ ?? ''))
+    .filter((category) => category !== '');
+}
+
+export function normalizeFeedItem(item, source, lang) {
   return {
     title: item.title ?? '',
     link: item.link ?? '',
     pubDate: item.pubDate ? new Date(item.pubDate) : null,
     source,
+    lang,
     image: extractImage(item),
+    description: item.contentSnippet ?? '',
+    categories: normalizeCategories(item.categories),
   };
 }
 
-export async function fetchFeed(url, source, parseFn) {
+export async function fetchFeed(url, source, parseFn, lang) {
   const feed = await parseFn(url);
-  return feed.items.map((item) => normalizeFeedItem(item, source));
+  return feed.items.map((item) => normalizeFeedItem(item, source, lang));
 }
 
 export async function fetchAllFeeds(feeds, parseFn) {
   const results = await Promise.allSettled(
-    feeds.map(({ url, source }) => fetchFeed(url, source, parseFn))
+    feeds.map(({ url, source, lang }) => fetchFeed(url, source, parseFn, lang))
   );
 
   const items = [];

@@ -4,22 +4,39 @@ import { normalizeFeedItem, extractImage, fetchFeed, fetchAllFeeds } from './rss
 describe('normalizeFeedItem', () => {
   it('normalizes a well-formed item', () => {
     const item = { title: 'GTA 6 delayed again', link: 'https://example.com/a', pubDate: '2026-08-01T12:00:00Z' };
-    expect(normalizeFeedItem(item, 'IGN')).toEqual({
+    expect(normalizeFeedItem(item, 'IGN', 'en')).toEqual({
       title: 'GTA 6 delayed again',
       link: 'https://example.com/a',
       pubDate: new Date('2026-08-01T12:00:00Z'),
       source: 'IGN',
+      lang: 'en',
       image: null,
+      description: '',
+      categories: [],
     });
   });
 
+  it('carries the snippet as description and flattens categories', () => {
+    const item = {
+      title: 'Nueva nota',
+      contentSnippet: 'Rockstar habla de GTA VI',
+      categories: ['GTA 6', { _: 'Rockstar', $: { domain: 'x' } }, {}, ''],
+    };
+    const result = normalizeFeedItem(item, 'Vandal', 'es');
+    expect(result.description).toBe('Rockstar habla de GTA VI');
+    expect(result.categories).toEqual(['GTA 6', 'Rockstar']);
+  });
+
   it('falls back to empty strings and null date for missing fields', () => {
-    expect(normalizeFeedItem({}, 'IGN')).toEqual({
+    expect(normalizeFeedItem({}, 'IGN', 'en')).toEqual({
       title: '',
       link: '',
       pubDate: null,
       source: 'IGN',
+      lang: 'en',
       image: null,
+      description: '',
+      categories: [],
     });
   });
 });
@@ -30,11 +47,11 @@ describe('fetchFeed', () => {
       items: [{ title: 'A', link: 'https://a', pubDate: '2026-08-01T00:00:00Z' }],
     });
 
-    const result = await fetchFeed('https://feed.example.com/rss', 'Rockstar Newswire', parseFn);
+    const result = await fetchFeed('https://feed.example.com/rss', 'Rockstar Newswire', parseFn, 'en');
 
     expect(parseFn).toHaveBeenCalledWith('https://feed.example.com/rss');
     expect(result).toEqual([
-      { title: 'A', link: 'https://a', pubDate: new Date('2026-08-01T00:00:00Z'), source: 'Rockstar Newswire', image: null },
+      { title: 'A', link: 'https://a', pubDate: new Date('2026-08-01T00:00:00Z'), source: 'Rockstar Newswire', lang: 'en', image: null, description: '', categories: [] },
     ]);
   });
 });
@@ -50,14 +67,14 @@ describe('fetchAllFeeds', () => {
 
     const result = await fetchAllFeeds(
       [
-        { url: 'https://good.example.com', source: 'Good Source' },
+        { url: 'https://good.example.com', source: 'Good Source', lang: 'es' },
         { url: 'https://bad.example.com', source: 'Bad Source' },
       ],
       parseFn
     );
 
     expect(result).toEqual([
-      { title: 'Good item', link: 'https://good', pubDate: new Date('2026-08-01T00:00:00Z'), source: 'Good Source', image: null },
+      { title: 'Good item', link: 'https://good', pubDate: new Date('2026-08-01T00:00:00Z'), source: 'Good Source', lang: 'es', image: null, description: '', categories: [] },
     ]);
   });
 

@@ -7,7 +7,7 @@ import Waitlist from '../../components/Waitlist.astro';
 import NewsCard from '../../components/NewsCard.astro';
 import Donations from '../../components/Donations.astro';
 import TrailerCard from '../../components/TrailerCard.astro';
-import { fetchAggregated, mergeNews } from '../../lib/news.js';
+import { fetchAggregated, forLang, mergeNews } from '../../lib/news.js';
 import { getLatestTrailers, watchUrl } from '../../lib/trailers.js';
 import { articleSlug, byLang } from '../../lib/articulos.js';
 import { getLangFromUrl, localizePath, useTranslations } from '../../i18n/utils';
@@ -34,7 +34,7 @@ const websiteSchema = {
 };
 
 const trailers = getLatestTrailers(3);
-const aggregated = await fetchAggregated();
+const aggregated = forLang(await fetchAggregated(), lang);
 const articulos = byLang(await getCollection('articulos'), lang);
 const merged = mergeNews(articulos, aggregated);
 

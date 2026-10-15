@@ -9,7 +9,7 @@ vi.mock('rss-parser', () => ({
   }),
 }));
 
-const { mergeNews, isGtaNews, FEEDS, fetchAggregated } = await import('./news.js');
+const { mergeNews, isGtaNews, forLang, FEEDS, fetchAggregated } = await import('./news.js');
 
 const articulo = (title, pubDate) => ({ id: title, data: { title, pubDate: new Date(pubDate) } });
 const agregado = (title, pubDate) => ({ title, link: `https://x/${title}`, pubDate: pubDate ? new Date(pubDate) : null, source: 'GameSpot' });
@@ -20,7 +20,26 @@ describe('FEEDS', () => {
     for (const feed of FEEDS) {
       expect(typeof feed.url).toBe('string');
       expect(typeof feed.source).toBe('string');
+      expect(['es', 'en']).toContain(feed.lang);
     }
+  });
+
+  it('covers both locales, each with several portals', () => {
+    expect(FEEDS.filter((f) => f.lang === 'es').length).toBeGreaterThanOrEqual(3);
+    expect(FEEDS.filter((f) => f.lang === 'en').length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('has no duplicate urls or source names', () => {
+    expect(new Set(FEEDS.map((f) => f.url)).size).toBe(FEEDS.length);
+    expect(new Set(FEEDS.map((f) => f.source)).size).toBe(FEEDS.length);
+  });
+});
+
+describe('forLang', () => {
+  it('keeps only the items of the requested language', () => {
+    const items = [{ lang: 'es', title: 'a' }, { lang: 'en', title: 'b' }, { lang: 'es', title: 'c' }];
+    expect(forLang(items, 'es').map((i) => i.title)).toEqual(['a', 'c']);
+    expect(forLang(items, 'en').map((i) => i.title)).toEqual(['b']);
   });
 });
 
@@ -38,6 +57,26 @@ describe('isGtaNews', () => {
 
   it('rejects an item with no title instead of throwing', () => {
     expect(isGtaNews({})).toBe(false);
+  });
+
+  it('trusts the setting names only in the title', () => {
+    expect(isGtaNews({ title: 'Leonida tendrá su propio mapa de calor' })).toBe(true);
+    expect(isGtaNews({ title: 'Back to Vice City: what we saw' })).toBe(true);
+    expect(isGtaNews({ title: 'Jason y Lucia protagonizan el nuevo tráiler' })).toBe(true);
+    expect(isGtaNews({ title: 'Reseña de Mafia', description: 'Con aire a Vice City' })).toBe(false);
+  });
+
+  it('matches the franchise in the description', () => {
+    expect(isGtaNews({ title: 'Rockstar confirma fecha', description: 'El lanzamiento de GTA VI llega en noviembre' })).toBe(true);
+  });
+
+  it('matches the franchise in the categories', () => {
+    expect(isGtaNews({ title: 'Rockstar confirma fecha', categories: ['Noticias', 'GTA 6'] })).toBe(true);
+    expect(isGtaNews({ title: 'Rockstar confirma fecha', categories: ['Noticias'] })).toBe(false);
+  });
+
+  it('does not match words that merely contain the letters', () => {
+    expect(isGtaNews({ title: 'Vegeta regresa en el nuevo juego', description: 'Dragon Ball' })).toBe(false);
   });
 });
 
