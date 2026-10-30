@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Banner · ¿A qué hora sale GTA 6?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--pink: #c9457f;
+		--keyline: #17070f;
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	html, body { width: 1080px; height: 1080px; background: #0b0710; }
+	.banner {
+		position: relative;
+		width: 1080px;
+		height: 1080px;
+		overflow: hidden;
+		font-family: 'Inter', sans-serif;
+		color: #fff;
+	}
+	/* Key art fills the top half, then fades into the dark panel that holds
+	   the schedule. */
+	.art {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: 600px;
+		background: url('../../src/content/articulos/_assets/portada.jpg') 0 -40px / 1700px auto no-repeat;
+	}
+	.art::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to bottom, rgb(11 7 16 / 0.15) 0%, rgb(11 7 16 / 0.35) 45%, #0b0710 100%);
+	}
+	.content {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		padding: 56px 64px 48px;
+	}
+	.kicker {
+		align-self: flex-start;
+		background: var(--pink);
+		padding: 8px 16px;
+		font-weight: 800;
+		font-size: 22px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		box-shadow: 4px 4px 0 var(--keyline);
+	}
+	h1 {
+		margin-top: 22px;
+		font-family: 'Anton', sans-serif;
+		font-weight: 400;
+		font-size: 118px;
+		line-height: 0.95;
+		text-transform: uppercase;
+		letter-spacing: 0.01em;
+		/* Same stacked keyline + pink slab as the site's .gta-outline. */
+		text-shadow:
+			-0.042em -0.042em 0 var(--keyline),
+			0.042em -0.042em 0 var(--keyline),
+			-0.042em 0.042em 0 var(--keyline),
+			0.042em 0.042em 0 var(--keyline),
+			-0.06em 0 0 var(--keyline),
+			0.06em 0 0 var(--keyline),
+			0 -0.06em 0 var(--keyline),
+			0 0.06em 0 var(--keyline),
+			0.07em 0.09em 0 var(--pink),
+			0.1em 0.13em 0.18em rgb(0 0 0 / 0.5);
+	}
+	.lead {
+		margin-top: 22px;
+		font-size: 32px;
+		font-weight: 700;
+		text-shadow: 0 2px 12px rgb(0 0 0 / 0.8);
+	}
+	.lead strong { color: #ff8fc0; }
+	.schedule {
+		margin-top: auto;
+		background: rgb(255 255 255 / 0.06);
+		border: 2px solid rgb(255 255 255 / 0.12);
+		border-radius: 18px;
+		padding: 10px 28px;
+	}
+	.row {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: center;
+		gap: 24px;
+		padding: 14px 0;
+		border-bottom: 1px solid rgb(255 255 255 / 0.1);
+	}
+	.row:last-child { border-bottom: 0; }
+	.countries { font-size: 27px; font-weight: 700; }
+	.countries small {
+		display: block;
+		margin-top: 2px;
+		font-size: 19px;
+		font-weight: 500;
+		color: rgb(255 255 255 / 0.6);
+	}
+	.utc {
+		font-family: 'Anton', sans-serif;
+		font-size: 36px;
+		color: #ff8fc0;
+		white-space: nowrap;
+	}
+	.utc span {
+		font-family: 'Inter', sans-serif;
+		font-size: 17px;
+		font-weight: 700;
+		color: rgb(255 255 255 / 0.6);
+		margin-left: 6px;
+	}
+	.footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		margin-top: 22px;
+		font-size: 18px;
+		color: rgb(255 255 255 / 0.65);
+	}
+	.footer .url {
+		font-size: 24px;
+		font-weight: 800;
+		color: #fff;
+	}
+</style>
+</head>
+<body>
+<div class="banner">
+	<div class="art"></div>
+	<div class="content">
+		<p class="kicker">PS5 · Jueves 19 de noviembre</p>
+		<h1>¿A qué hora<br>sale GTA 6?</h1>
+		<p class="lead">A la <strong>medianoche</strong> de tu país, por oleadas:</p>
+
+		<div class="schedule">
+			<div class="row">
+				<p class="countries">España<small>00:00 del jueves 19</small></p>
+				<p class="utc">23:00<span>UTC · mié 18</span></p>
+			</div>
+			<div class="row">
+				<p class="countries">Argentina · Chile · Uruguay · Paraguay<small>12:00 a. m. del jueves 19</small></p>
+				<p class="utc">03:00<span>UTC</span></p>
+			</div>
+			<div class="row">
+				<p class="countries">Bolivia<small>12:00 a. m. del jueves 19</small></p>
+				<p class="utc">04:00<span>UTC</span></p>
+			</div>
+			<div class="row">
+				<p class="countries">Colombia · Perú · Ecuador · Panamá · EE. UU.<small>12:00 a. m. del jueves 19 (EE. UU.: hora del Este)</small></p>
+				<p class="utc">05:00<span>UTC</span></p>
+			</div>
+			<div class="row">
+				<p class="countries">México y Centroamérica<small>12:00 a. m. del jueves 19 (México: hora del centro)</small></p>
+				<p class="utc">06:00<span>UTC</span></p>
+			</div>
+		</div>
+
+		<div class="footer">
+			<p>Según la PlayStation Store de cada país.<br>Rockstar no ha confirmado una hora oficial.</p>
+			<p class="url">countdowngtavi.com</p>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Logo · foto de perfil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@800&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--pink: #c9457f;
+		--keyline: #17070f;
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	html, body { width: 1080px; height: 1080px; background: #0b0710; }
+	/* Instagram crops the profile photo to a circle, so everything that
+	   matters sits inside the central ~880px disc. */
+	.logo {
+		position: relative;
+		width: 1080px;
+		height: 1080px;
+		overflow: hidden;
+		/* Vice City dusk: pink sky into a deep violet night. */
+		background:
+			radial-gradient(circle at 50% 38%, rgb(255 143 192 / 0.55) 0%, rgb(201 69 127 / 0.35) 30%, transparent 62%),
+			linear-gradient(180deg, #2a0f3a 0%, #120818 70%, #0b0710 100%);
+	}
+	svg { position: absolute; inset: 0; }
+	.six {
+		position: absolute;
+		left: 50%;
+		top: 49%;
+		transform: translate(-50%, -50%);
+		font-family: 'Anton', sans-serif;
+		font-size: 480px;
+		line-height: 1;
+		color: #fff;
+		/* The site's .gta-outline keyline + pink slab. */
+		text-shadow:
+			-0.042em -0.042em 0 var(--keyline),
+			0.042em -0.042em 0 var(--keyline),
+			-0.042em 0.042em 0 var(--keyline),
+			0.042em 0.042em 0 var(--keyline),
+			-0.06em 0 0 var(--keyline),
+			0.06em 0 0 var(--keyline),
+			0 -0.06em 0 var(--keyline),
+			0 0.06em 0 var(--keyline),
+			-0.03em -0.055em 0 var(--keyline),
+			0.03em -0.055em 0 var(--keyline),
+			-0.03em 0.055em 0 var(--keyline),
+			0.03em 0.055em 0 var(--keyline),
+			0.07em 0.09em 0 var(--pink),
+			0.1em 0.13em 0.18em rgb(0 0 0 / 0.5);
+	}
+	.date {
+		position: absolute;
+		left: 50%;
+		bottom: 168px;
+		transform: translateX(-50%);
+		background: var(--pink);
+		padding: 10px 26px;
+		font-family: 'Inter', sans-serif;
+		font-weight: 800;
+		font-size: 50px;
+		letter-spacing: 0.06em;
+		color: #fff;
+		white-space: nowrap;
+		box-shadow: 6px 6px 0 var(--keyline);
+	}
+</style>
+</head>
+<body>
+<div class="logo">
+	<!-- Clock dial: twelve hour ticks and a pink arc closing toward midnight,
+	     with the 12 o'clock marker as the finish line. -->
+	<svg width="1080" height="1080" viewBox="0 0 1080 1080">
+		<circle cx="540" cy="540" r="400" fill="none" stroke="rgb(255 255 255 / 0.14)" stroke-width="22" />
+		<circle cx="540" cy="540" r="400" fill="none" stroke="#ff8fc0" stroke-width="22"
+			stroke-linecap="round" stroke-dasharray="2262 2513" transform="rotate(-90 540 540)" />
+		<g stroke="#fff" stroke-width="10" stroke-linecap="round">
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(30 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(60 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(90 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(120 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(150 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(180 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(210 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(240 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(270 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(300 540 540)" />
+			<line x1="540" y1="96" x2="540" y2="66" transform="rotate(330 540 540)" />
+		</g>
+		<!-- 12 o'clock marker: midnight, when the game unlocks. -->
+		<rect x="526" y="56" width="28" height="68" rx="8" fill="#fff" stroke="#17070f" stroke-width="6" />
+	</svg>
+	<p class="six">VI</p>
+	<p class="date">19·11·26</p>
+</div>
+</body>
+</html>
