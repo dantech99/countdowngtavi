@@ -22,6 +22,8 @@ const es = {
 	'hero.seconds': 'Segundos',
 	'hero.disclaimer':
 		'Rockstar solo confirmó la fecha de lanzamiento, no la hora exacta de desbloqueo. El contador asume medianoche hora local.',
+	'hero.preload': 'Predescarga · 12 de noviembre',
+	'hero.preloadAvailable': 'La predescarga ya está disponible',
 
 	'waitlist.heading': 'Súmate al lanzamiento',
 	'waitlist.sub': 'Marca que vas a estar el día uno. Sin email, sin registro.',
@@ -101,6 +103,8 @@ const en = {
 	'hero.seconds': 'Seconds',
 	'hero.disclaimer':
 		'Rockstar only confirmed the release date, not the exact unlock time. The counter assumes midnight local time.',
+	'hero.preload': 'Pre-load · November 12',
+	'hero.preloadAvailable': 'Pre-load is now available',
 
 	'waitlist.heading': 'Join the launch',
 	'waitlist.sub': "Mark that you'll be there on day one. No email, no signup.",
