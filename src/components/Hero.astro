@@ -1,24 +1,52 @@
 ---
 // src/components/Hero.astro
-import { Image } from 'astro:assets';
-import heroBg from '../assets/background-gta6.png';
+import type { ImageMetadata } from 'astro';
+import { Image, getImage } from 'astro:assets';
+import { toSlides } from '../lib/gallery.js';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url.pathname);
 const t = useTranslations(lang);
+
+// Same widths as Gallery.astro, so both components share the generated files
+// instead of producing a second set of variants for the same 39 screenshots.
+const WIDTHS = [640, 960, 1280, 1920];
+const SIZES = '100vw';
+
+const files = import.meta.glob<{ default: ImageMetadata }>('../assets/launch-gallery/*.jpg', {
+	eager: true,
+});
+const slides = toSlides(Object.keys(files));
+
+// Only the first slide is in the HTML as an image. The rest travel as URLs
+// and are fetched one at a time, right before they are shown: 39 stacked
+// <img> elements would all download on load, visible or not.
+const sources = await Promise.all(
+	slides.map(async (slide) => {
+		const image = await getImage({ src: files[slide.path].default, widths: WIDTHS, sizes: SIZES });
+		return { src: image.src, srcset: image.srcSet.attribute };
+	}),
+);
 ---
 
 <section id="hero" class="relative h-screen w-full overflow-hidden flex items-center justify-center text-center">
-	<Image
+	<div
 		id="hero-bg"
-		src={heroBg}
-		alt={t('hero.bgAlt')}
-		class="absolute -top-[10%] left-0 h-[115%] w-full object-cover will-change-transform sm:-top-[30%] sm:h-[140%]"
-		loading="eager"
-		fetchpriority="high"
-		widths={[640, 1280, 1920, 3840]}
-		sizes="100vw"
-	/>
+		role="img"
+		aria-label={t('hero.bgAlt')}
+		data-hero-slides={JSON.stringify(sources)}
+		class="absolute -top-[10%] left-0 isolate h-[115%] w-full will-change-transform sm:-top-[30%] sm:h-[140%]"
+	>
+		<Image
+			src={files[slides[0].path].default}
+			alt=""
+			class="absolute inset-0 h-full w-full object-cover"
+			loading="eager"
+			fetchpriority="high"
+			widths={WIDTHS}
+			sizes={SIZES}
+		/>
+	</div>
 	<div id="hero-overlay" class="absolute inset-0 bg-black opacity-40"></div>
 
 	<div id="hero-content" class="relative z-10 flex flex-col items-center gap-6 px-4 will-change-transform">
@@ -131,6 +159,70 @@ const t = useTranslations(lang);
 
 	mm.add('(prefers-reduced-motion: no-preference) and (max-width: 639px)', () => parallax('8vh'));
 	mm.add('(prefers-reduced-motion: no-preference) and (min-width: 640px)', () => parallax('25vh'));
+
+	// Background slideshow: two stacked layers. The hidden one loads the next
+	// screenshot, fades in on top of the visible one, and then they swap roles.
+	// The outgoing layer stays opaque during the fade, so the artwork never
+	// dips to black between two slides.
+	const SLIDE_INTERVAL_MS = 7000;
+	const SLIDE_FADE_S = 1.5;
+
+	const bg = document.getElementById('hero-bg')!;
+	const slideSources: { src: string; srcset: string }[] = JSON.parse(bg.dataset.heroSlides ?? '[]');
+	let front = bg.querySelector('img')!;
+	let back = front.cloneNode(false) as HTMLImageElement;
+	back.removeAttribute('fetchpriority');
+	back.loading = 'eager';
+	back.style.opacity = '0';
+	bg.append(back);
+
+	let slideIndex = 0;
+	let fading = false;
+
+	async function nextSlide() {
+		// Nothing to see: the tab is in the background or the hero has been
+		// scrolled past. Skipping the tick also skips the download.
+		if (fading || document.hidden || hero.getBoundingClientRect().bottom <= 0) return;
+
+		const nextIndex = (slideIndex + 1) % slideSources.length;
+		const source = slideSources[nextIndex];
+		fading = true;
+		try {
+			back.srcset = source.srcset;
+			back.src = source.src;
+			await back.decode();
+		} catch {
+			// The image failed to load; keep the current one and retry on the
+			// next tick.
+			fading = false;
+			return;
+		}
+
+		const incoming = back;
+		const outgoing = front;
+		gsap.set(incoming, { zIndex: 1 });
+		gsap.to(incoming, {
+			opacity: 1,
+			duration: SLIDE_FADE_S,
+			ease: 'power1.inOut',
+			onComplete: () => {
+				gsap.set(outgoing, { opacity: 0 });
+				gsap.set(incoming, { zIndex: 0 });
+				front = incoming;
+				back = outgoing;
+				slideIndex = nextIndex;
+				fading = false;
+			},
+		});
+	}
+
+	// A background that keeps changing is motion too, so reduced motion keeps
+	// the first screenshot as a static image.
+	mm.add('(prefers-reduced-motion: no-preference)', () => {
+		if (slideSources.length < 2) return;
+		const timer = setInterval(nextSlide, SLIDE_INTERVAL_MS);
+		return () => clearInterval(timer);
+	});
 
 	gsap.to('#hero-overlay', {
 		opacity: 0.85,
