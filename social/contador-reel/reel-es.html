@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reel · Contador GTA VI</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+<style>
+	:root { --pink: #c9457f; --keyline: #17070f; }
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	html, body { width: 1080px; height: 1920px; background: #000; overflow: hidden; }
+	.stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; font-family: 'Inter', sans-serif; color: #fff; }
+	.bg { position: absolute; inset: 0; background: url('fondo-vertical.jpg') center / cover no-repeat; transform-origin: 50% 40%; }
+	.shade { position: absolute; inset: 0; background:
+		linear-gradient(to bottom, rgb(11 7 16 / 0.55) 0%, rgb(11 7 16 / 0) 28%, rgb(11 7 16 / 0) 55%, rgb(11 7 16 / 0.85) 100%); }
+	.band { position: absolute; left: 0; right: 0; top: 760px; height: 420px; background: linear-gradient(to bottom, transparent, rgb(11 7 16 / 0.62) 30%, rgb(11 7 16 / 0.62) 70%, transparent); }
+	.flash { position: absolute; left: 50%; top: 960px; width: 1400px; height: 1400px; margin: -700px 0 0 -700px; border-radius: 50%;
+		background: radial-gradient(circle, rgb(255 255 255 / 0.95) 0%, rgb(255 143 192 / 0.7) 22%, transparent 60%); }
+	.counter { position: absolute; left: 0; right: 0; top: 960px; height: 0; display: flex; justify-content: center; gap: 28px; }
+	.unit { display: flex; flex-direction: column; align-items: center; width: 220px; transform: translateY(-50%); }
+	.num { font-family: 'Anton', sans-serif; font-size: 188px; line-height: 1; font-variant-numeric: tabular-nums; }
+	.lab { margin-top: 6px; font-weight: 800; font-size: 34px; letter-spacing: 0.14em; text-transform: uppercase; color: #fff; }
+	.outline { text-shadow:
+		-0.042em -0.042em 0 var(--keyline), 0.042em -0.042em 0 var(--keyline),
+		-0.042em 0.042em 0 var(--keyline), 0.042em 0.042em 0 var(--keyline),
+		-0.06em 0 0 var(--keyline), 0.06em 0 0 var(--keyline), 0 -0.06em 0 var(--keyline), 0 0.06em 0 var(--keyline),
+		-0.03em -0.055em 0 var(--keyline), 0.03em -0.055em 0 var(--keyline),
+		-0.03em 0.055em 0 var(--keyline), 0.03em 0.055em 0 var(--keyline),
+		0.07em 0.09em 0 var(--pink), 0.1em 0.13em 0.18em rgb(0 0 0 / 0.5); }
+	.soft { text-shadow: 0 0 0.25em var(--keyline), -0.06em -0.06em 0 var(--keyline), 0.06em -0.06em 0 var(--keyline),
+		-0.06em 0.06em 0 var(--keyline), 0.06em 0.06em 0 var(--keyline), 0.07em 0.09em 0 var(--pink); }
+	.title { position: absolute; left: 0; right: 0; top: 250px; text-align: center; font-family: 'Anton', sans-serif; font-size: 160px; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; }
+	.kicker { position: absolute; left: 50%; top: 190px; transform: translateX(-50%); background: var(--pink); padding: 10px 22px; font-weight: 800; font-size: 28px; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: 5px 5px 0 var(--keyline); white-space: nowrap; }
+	.foot { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; }
+	.foot .date { font-family: 'Anton', sans-serif; font-size: 70px; text-transform: uppercase; }
+	.foot .tz { margin-top: 10px; font-size: 26px; font-weight: 700; color: rgb(255 255 255 / 0.75); }
+	.foot .url { margin-top: 26px; font-size: 34px; font-weight: 800; }
+	.black { position: absolute; inset: 0; background: #000; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+	<div class="bg" id="bg"></div>
+	<div class="shade"></div>
+	<div class="band" id="band"></div>
+	<div class="flash" id="flash"></div>
+	<p class="kicker" id="kicker">Cuenta regresiva</p>
+	<h1 class="title outline" id="title">GTA VI</h1>
+	<div class="counter" id="counter">
+		<div class="unit"><span class="num outline" data-u="days">--</span><span class="lab soft">Días</span></div>
+		<div class="unit"><span class="num outline" data-u="hours">--</span><span class="lab soft">Horas</span></div>
+		<div class="unit"><span class="num outline" data-u="minutes">--</span><span class="lab soft">Min</span></div>
+		<div class="unit"><span class="num outline" data-u="seconds">--</span><span class="lab soft">Seg</span></div>
+	</div>
+	<div class="foot" id="foot">
+		<p class="date outline">19 · noviembre · 2026</p>
+		<p class="tz">Hasta la medianoche · hora de Colombia (UTC−5)</p>
+		<p class="url">countdowngtavi.com</p>
+	</div>
+	<div class="black" id="black"></div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const BASE = new Date(params.get('base') || Date.now()).getTime();
+const TARGET = new Date('2026-11-19T00:00:00-05:00').getTime();
+const clamp = (x) => Math.min(1, Math.max(0, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const outCubic = (x) => 1 - Math.pow(1 - x, 3);
+const outBack = (x) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const inOut = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+const $ = (id) => document.getElementById(id);
+const nums = [...document.querySelectorAll('.num')];
+const pad = (n) => String(n).padStart(2, '0');
+
+// Pure function of time: frame N always renders identically.
+window.render = (t) => {
+	// Slow push-in on the key art for the whole clip.
+	$('bg').style.transform = `scale(${1.04 + 0.1 * inOut(seg(t, 0, 7))})`;
+	$('black').style.opacity = 1 - seg(t, 0, 0.7);
+
+	// Flash at the centre, then the counter flies out of it and lands there.
+	const f = seg(t, 0.95, 1.5);
+	$('flash').style.opacity = f === 0 ? 0 : Math.pow(1 - f, 2);
+	$('flash').style.transform = `scale(${0.2 + 0.9 * outCubic(f)})`;
+	$('band').style.opacity = outCubic(seg(t, 1.1, 1.9));
+
+	nums.forEach((el, i) => {
+		const k = seg(t, 1.0 + i * 0.09, 1.9 + i * 0.09);
+		const unit = el.parentElement;
+		const s = 0.15 + 0.85 * outBack(k);
+		unit.style.opacity = clamp(k * 3);
+		unit.style.filter = `blur(${(1 - outCubic(k)) * 26}px)`;
+		unit.style.transform = `translateY(calc(-50% + ${(1 - outCubic(k)) * 320}px)) scale(${s})`;
+	});
+
+	const left = Math.max(0, TARGET - (BASE + t * 1000));
+	const v = { days: Math.floor(left / 864e5), hours: Math.floor(left / 36e5) % 24, minutes: Math.floor(left / 6e4) % 60, seconds: Math.floor(left / 1e3) % 60 };
+	nums.forEach((el) => (el.textContent = pad(v[el.dataset.u])));
+
+	const kt = outCubic(seg(t, 1.9, 2.5));
+	$('kicker').style.opacity = kt; $('kicker').style.transform = `translateX(-50%) translateY(${(1 - kt) * -30}px)`;
+	const tt = outCubic(seg(t, 2.1, 2.8));
+	$('title').style.opacity = tt; $('title').style.transform = `translateY(${(1 - tt) * -40}px)`;
+	const ft = outCubic(seg(t, 2.8, 3.5));
+	$('foot').style.opacity = ft; $('foot').style.transform = `translateY(${(1 - ft) * 50}px)`;
+};
+document.fonts.ready.then(() => { window.render(0); window.ready = true; });
+</script>
+</body>
+</html>
