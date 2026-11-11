@@ -87,10 +87,11 @@ mayoría no vale la pena.
 **Confirmado por Rockstar:**
 
 - El juego sale el **19 de noviembre de 2026** en PS5 y Xbox Series X|S.
-- La **predescarga** abre el **12 de noviembre de 2026** para quienes lo
-  reservaron en digital.
+- La **predescarga** está abierta desde el **10 de noviembre de 2026** para
+  quienes lo reservaron en digital. Rockstar la adelantó dos días: la fecha
+  original era el 12 de noviembre.
 - La edición física trae un **código de descarga** dentro de la caja, no un
-  disco, y se vende desde el 12 de noviembre para permitir la predescarga.
+  disco, y llega a las tiendas el 12 de noviembre.
 
 **Verificado por nosotros en la PlayStation Store:**
 
@@ -111,9 +112,10 @@ mayoría no vale la pena.
 
 ## Cómo estar listo a la medianoche
 
-1. Reserva la versión digital (o compra la física con código) antes del 12 de
-   noviembre.
-2. Predescarga el juego desde el 12 de noviembre, para no depender de tu
-   conexión la noche del lanzamiento.
+1. Reserva la versión digital, o compra la física con código, que llega a las
+   tiendas el 12 de noviembre.
+2. Predescarga el juego cuanto antes (la predescarga digital está abierta desde
+   el 10 de noviembre), para no depender de tu conexión la noche del
+   lanzamiento.
 3. Deja la consola encendida o en modo de reposo con conexión a internet.
 4. Sigue la cuenta regresiva en el [contador](/).

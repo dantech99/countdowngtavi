@@ -86,9 +86,11 @@ people it isn't worth it.
 **Confirmed by Rockstar:**
 
 - The game launches on **November 19, 2026** on PS5 and Xbox Series X|S.
-- **Pre-load** opens on **November 12, 2026** for digital pre-orders.
+- **Pre-load** has been open since **November 10, 2026** for digital
+  pre-orders. Rockstar moved it up by two days: the original date was
+  November 12.
 - The physical edition comes with a **download code** inside the box, not a
-  disc, and goes on sale on November 12 to support pre-loading.
+  disc, and reaches stores on November 12.
 
 **Verified by us on the PlayStation Store:**
 
@@ -108,9 +110,9 @@ people it isn't worth it.
 
 ## How to be ready at midnight
 
-1. Pre-order the digital version (or buy the physical one with a code) before
-   November 12.
-2. Pre-load the game from November 12, so you don't depend on your connection on
-   launch night.
+1. Pre-order the digital version, or buy the physical one with a code, which
+   reaches stores on November 12.
+2. Pre-load the game as soon as you can (digital pre-load has been open since
+   November 10), so you don't depend on your connection on launch night.
 3. Leave your console on, or in rest mode with an internet connection.
 4. Follow the countdown on the [countdown page](/en/).
